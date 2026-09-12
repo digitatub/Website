@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Met Me at a Very Chinese Time in My Life</title>
+
+    <title>The Betrayer</title>
 
     <style>
         * {
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             margin: 0;
             font-family: Georgia, serif;
-            background: #f5eee2;
-            color: #241c18;
+            background: #eef5ff;
+            color: #172033;
         }
+
+        /* HERO */
 
         header {
             min-height: 100vh;
@@ -25,40 +32,92 @@
             align-items: center;
             text-align: center;
             padding: 30px;
-            background: linear-gradient(135deg, #7b1113, #d4a017);
-            color: white;
+
+            background:
+                linear-gradient(
+                    rgba(255,255,255,0.72),
+                    rgba(255,255,255,0.72)
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    #ffffff 0px,
+                    #ffffff 85px,
+                    #2b6cb0 86px,
+                    #2b6cb0 115px,
+                    #ffffff 116px,
+                    #ffffff 200px
+                );
+
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "✡";
+            position: absolute;
+            font-size: 500px;
+            opacity: 0.07;
+            color: #1769aa;
+            z-index: 0;
+        }
+
+        header > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .flag {
+            font-size: 90px;
+            margin-bottom: 20px;
         }
 
         header h1 {
-            font-size: clamp(45px, 8vw, 90px);
-            max-width: 1000px;
+            font-size: clamp(50px, 9vw, 110px);
+            max-width: 1100px;
             margin: 0;
-            line-height: 1;
-            text-shadow: 4px 4px 0px rgba(0,0,0,0.25);
+            line-height: 0.95;
+            color: #123b70;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.15);
         }
 
         header p {
-            font-size: 22px;
+            font-size: 24px;
+            max-width: 750px;
             margin-top: 30px;
             font-style: italic;
         }
 
-        .scroll {
-            margin-top: 50px;
-            font-size: 16px;
-            opacity: 0.8;
+        .start-button {
+            margin-top: 35px;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            background: #1769aa;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            transition: 0.2s;
         }
 
+        .start-button:hover {
+            transform: scale(1.07);
+        }
+
+        /* SECTIONS */
+
         section {
-            max-width: 900px;
+            max-width: 1000px;
             margin: auto;
-            padding: 90px 25px;
+            padding: 100px 25px;
         }
 
         h2 {
-            font-size: 42px;
-            color: #8b1515;
-            margin-bottom: 25px;
+            font-size: 48px;
+            color: #145da0;
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         p {
@@ -66,84 +125,221 @@
             line-height: 1.8;
         }
 
+        .intro {
+            text-align: center;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        /* VILLAIN */
+
+        .villain {
+            background: #121820;
+            color: white;
+            max-width: none;
+            text-align: center;
+        }
+
+        .villain h2 {
+            color: #79b8ff;
+        }
+
+        .character {
+            margin: 50px auto;
+            max-width: 600px;
+            padding: 45px;
+            border-radius: 25px;
+            background: linear-gradient(145deg, #252e38, #0c1015);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .zombie {
+            font-size: 150px;
+            margin-bottom: 20px;
+        }
+
+        .character h3 {
+            font-size: 40px;
+            margin: 10px;
+            color: #9ccaff;
+        }
+
+        .character p {
+            color: #d6dce3;
+        }
+
+        /* HEALTH BAR */
+
+        .health-container {
+            max-width: 650px;
+            margin: 40px auto;
+        }
+
+        .health-label {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 35px;
+            background: #333;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid white;
+        }
+
+        #health {
+            width: 100%;
+            height: 100%;
+            background: #d62828;
+            transition: width 0.3s;
+        }
+
+        #attackButton {
+            padding: 20px 45px;
+            font-size: 25px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            background: #d62828;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: 0.15s;
+        }
+
+        #attackButton:hover {
+            transform: scale(1.05);
+        }
+
+        #attackButton:active {
+            transform: scale(0.95);
+        }
+
+        #gameMessage {
+            font-size: 25px;
+            margin-top: 30px;
+            font-weight: bold;
+            min-height: 40px;
+        }
+
+        /* STORY */
+
         .quote {
-            margin: 50px 0;
+            margin: 50px auto;
             padding: 35px;
-            border-left: 8px solid #d4a017;
+            border-left: 8px solid #1769aa;
             background: white;
             font-size: 30px;
             font-style: italic;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            max-width: 850px;
         }
+
+        /* CARDS */
 
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 25px;
+            margin-top: 50px;
         }
 
         .card {
             background: white;
             padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-7px);
         }
 
         .card h3 {
-            color: #8b1515;
-            font-size: 24px;
+            color: #145da0;
+            font-size: 25px;
         }
 
         .card p {
             font-size: 17px;
         }
 
+        /* FINAL MESSAGE */
+
         .final {
             text-align: center;
-            background: #241c18;
+            background: #0e1722;
             color: white;
             max-width: none;
         }
 
         .final h2 {
-            color: #d4a017;
+            color: #8fc7ff;
         }
+
+        .final-message {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .star {
+            font-size: 80px;
+            margin: 30px;
+        }
+
+        /* SUPPORT */
+
+        .support {
+            text-align: center;
+            background: #f4f8fc;
+        }
+
+        .support-box {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 45px;
+            border-radius: 25px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+        }
+
+        .support-button {
+            display: inline-block;
+            margin: 12px;
+            padding: 17px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 19px;
+            font-weight: bold;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .support-button:hover {
+            transform: translateY(-3px);
+        }
+
+        .paypal {
+            background: #0070ba;
+        }
+
+        .venmo {
+            background: #3d95ce;
+        }
+
+        /* FOOTER */
 
         footer {
             text-align: center;
-            padding: 25px;
-            background: #17110f;
-            color: #aaa;
+            padding: 30px;
+            background: #080d13;
+            color: #9ba5b0;
         }
 
-        .big {
-            font-size: 50px;
-            margin: 20px;
-        }
-
-        /* Music button */
-        #musicButton {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            z-index: 9999;
-            background: #d4a017;
-            color: #241c18;
-            border: 3px solid #fff;
-            border-radius: 50px;
-            padding: 15px 22px;
-            font-family: Georgia, serif;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-            display: none;
-        }
-
-        #musicButton:hover {
-            transform: scale(1.05);
-        }
+        /* MUSIC */
 
         #youtubePlayer {
             position: fixed;
@@ -151,172 +347,460 @@
             height: 1px;
             opacity: 0;
             pointer-events: none;
+            bottom: 0;
+            left: 0;
+        }
+
+        #musicButton {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 9999;
+            padding: 13px 20px;
+            border: none;
+            border-radius: 30px;
+            background: #1769aa;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+
+            header h1 {
+                font-size: 52px;
+            }
+
+            header p {
+                font-size: 19px;
+            }
+
+            h2 {
+                font-size: 38px;
+            }
+
+            .zombie {
+                font-size: 100px;
+            }
+
+            .quote {
+                font-size: 23px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<!-- Hidden YouTube player -->
-<div id="youtubePlayer"></div>
-
-<!-- Appears only if autoplay is blocked -->
-<button id="musicButton">
-    🔊 Click to Start the Chinese Era
-</button>
+<!-- HERO -->
 
 <header>
-    <div class="big">🇨🇳</div>
+
+    <div class="flag">🇮🇱</div>
 
     <h1>
-        You Met Me at a Very Chinese Time in My Life
+        THE BETRAYER
     </h1>
 
     <p>
-        An unnecessarily serious investigation into an extremely important sentence.
+        One man. One terrible decision.
+        An absolutely unnecessary amount of consequences.
     </p>
 
-    <div class="scroll">
-        ↓ Scroll to understand the lore ↓
-    </div>
+    <button class="start-button"
+            onclick="document.getElementById('villain').scrollIntoView()">
+        ENTER THE STORY
+    </button>
+
 </header>
 
+
+<!-- INTRO -->
+
 <section>
-    <h2>What Does It Mean?</h2>
 
-    <p>
-        At first glance, the phrase appears simple.
-        But beneath those seven words lies a complicated emotional,
-        cultural, and possibly culinary journey.
-    </p>
+    <h2>The Story</h2>
 
-    <div class="quote">
-        “You met me at a very Chinese time in my life.”
+    <div class="intro">
+
+        <p>
+            There was once a man who was trusted by the people around him.
+        </p>
+
+        <p>
+            Then money entered the equation.
+        </p>
+
+        <p>
+            He chose greed over loyalty and betrayed the people
+            who had placed their trust in him.
+        </p>
+
+        <div class="quote">
+            "You can sell someone's trust for money...
+            but you can't buy it back."
+        </div>
+
+        <p>
+            And somehow, things got considerably worse from there.
+        </p>
+
     </div>
 
-    <p>
-        Was it the food? The culture? The vibes?
-        The sudden appearance of an unreasonable amount of fried rice?
-        Nobody truly knows.
-    </p>
 </section>
 
+
+<!-- VILLAIN -->
+
+<section class="villain" id="villain">
+
+    <h2>THE BETRAYER</h2>
+
+    <div class="character">
+
+        <div class="zombie">
+            🧟‍♂️
+        </div>
+
+        <h3>The Man Who Sold His Loyalty</h3>
+
+        <p>
+            A fictional character whose greed consumed everything
+            he once stood for.
+        </p>
+
+        <p>
+            His zombie-like appearance represents the consequences
+            of his own choices.
+        </p>
+
+        <p>
+            He still wears the kippah he wore before his betrayal,
+            but now he walks as a shell of the man he once was.
+        </p>
+
+    </div>
+
+
+    <!-- GAME -->
+
+    <div class="health-container">
+
+        <div class="health-label">
+            BETRAYER'S HEALTH
+        </div>
+
+        <div class="health-bar">
+            <div id="health"></div>
+        </div>
+
+    </div>
+
+    <button id="attackButton">
+        DEFEAT THE BETRAYER
+    </button>
+
+    <div id="gameMessage">
+        He thinks he can escape his consequences...
+    </div>
+
+</section>
+
+
+<!-- THREE STAGES -->
+
 <section>
-    <h2>The Three Stages</h2>
+
+    <h2>The Three Stages of Betrayal</h2>
 
     <div class="cards">
 
         <div class="card">
-            <h3>Stage 1 — Discovery</h3>
+
+            <h3>Stage 1 — Trust</h3>
+
             <p>
-                Something happens. Nobody knows exactly what.
-                But suddenly, everything feels slightly more Chinese.
+                Everyone believed he could be trusted.
+                He was welcomed and given responsibility.
             </p>
+
         </div>
 
-        <div class="card">
-            <h3>Stage 2 — Acceptance</h3>
-            <p>
-                At this point, resistance is pointless.
-                The Chinese era has officially begun.
-            </p>
-        </div>
 
         <div class="card">
-            <h3>Stage 3 — Enlightenment</h3>
+
+            <h3>Stage 2 — Greed</h3>
+
             <p>
-                You realize that the phrase was never really about
-                China. It was about the journey.
+                Then he discovered that betrayal could make him money.
+                He chose the money.
             </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>Stage 3 — Consequences</h3>
+
+            <p>
+                Eventually he discovered the oldest lesson of all:
+                actions have consequences.
+            </p>
+
         </div>
 
     </div>
+
 </section>
+
+
+<!-- MORAL -->
 
 <section>
-    <h2>The Science</h2>
 
-    <p>
-        Researchers have spent absolutely no time studying this phenomenon.
-        Nevertheless, preliminary evidence suggests that the phrase
-        becomes approximately 73% funnier every time it is repeated.
-    </p>
+    <h2>The Lesson</h2>
 
-    <p>
-        Further research is required.
-    </p>
+    <div class="intro">
+
+        <p>
+            This story isn't about an entire group of people.
+        </p>
+
+        <p>
+            It's about one fictional person who made the choice
+            to betray people who trusted him.
+        </p>
+
+        <div class="quote">
+            "Never betray the people who trust you."
+        </div>
+
+        <p>
+            Money disappears.
+            Reputation can disappear.
+            Trust is much harder to rebuild.
+        </p>
+
+    </div>
+
 </section>
+
+
+<!-- FINAL -->
 
 <section class="final">
-    <h2>And That's the Story.</h2>
 
-    <p>
-        You didn't meet me at a normal time in my life.
-    </p>
+    <div class="star">
+        ✡
+    </div>
 
-    <p>
-        You met me at a VERY Chinese time in my life.
-    </p>
+    <h2>THE BETRAYER HAS FALLEN</h2>
 
-    <div class="big">🇨🇳 🥡 🥢</div>
+    <div class="final-message">
 
-    <p>
-        Thank you for visiting.
-    </p>
+        <p>
+            His greed brought him here.
+        </p>
+
+        <p>
+            His betrayal destroyed his reputation.
+        </p>
+
+        <p>
+            And his choices finally caught up with him.
+        </p>
+
+        <p>
+            Remember the lesson:
+            <strong>don't betray the people who trust you.</strong>
+        </p>
+
+    </div>
+
 </section>
 
+
+<!-- SUPPORT -->
+
+<section class="support">
+
+    <h2>💰 Enjoyed the Game?</h2>
+
+    <div class="support-box">
+
+        <p>
+            If you enjoyed this ridiculous little game,
+            you can leave a tip to help support future updates.
+        </p>
+
+        <!-- PAYPAL -->
+
+        <a
+            class="support-button paypal"
+            href="https://paypal.me/stevenlarrosa"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            💙 Tip with PayPal
+        </a>
+
+
+        <!-- VENMO -->
+
+        <a
+            class="support-button venmo"
+            href="VENMO_LINK_GOES_HERE"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            💙 Tip with Venmo
+        </a>
+
+        <p style="font-size:14px; color:#777; margin-top:25px;">
+            Thanks for supporting the project!
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- FOOTER -->
+
 <footer>
-    © 2026 The Very Chinese Era™
+
+    © 2026 The Betrayer™
+    <br>
+    A completely fictional story.
+
 </footer>
 
+
+<!-- MUSIC -->
+
+<div id="youtubePlayer"></div>
+
+<button id="musicButton">
+    🎵 Play Music
+</button>
+
+
+<!-- YOUTUBE API -->
+
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
-    // YouTube video ID from your link
-    const videoId = "xGxj2iHAtzE";
 
     let player;
 
-    // Load YouTube's player API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
-
-    // YouTube calls this automatically after loading
     function onYouTubeIframeAPIReady() {
-        player = new YT.Player("youtubePlayer", {
-            videoId: videoId,
+
+        player = new YT.Player('youtubePlayer', {
+
+            videoId: 'vHSNZK4Je-Y',
 
             playerVars: {
                 autoplay: 1,
                 controls: 0,
                 loop: 1,
-                playlist: videoId,
-                playsinline: 1
+                playlist: 'vHSNZK4Je-Y',
+                modestbranding: 1
             },
 
             events: {
+
                 onReady: function(event) {
-                    event.target.setVolume(100);
+
+                    event.target.setVolume(60);
+
                     event.target.playVideo();
 
-                    // If browser blocks autoplay, show button
-                    setTimeout(function() {
-                        if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
-                            document.getElementById("musicButton").style.display = "block";
-                        }
-                    }, 1500);
                 }
+
             }
+
         });
+
     }
 
-    // Manual fallback
+
     document.getElementById("musicButton").addEventListener("click", function() {
+
         if (player) {
-            player.unMute();
+
             player.playVideo();
-            this.style.display = "none";
+
+            this.innerText = "🎵 Music Playing";
+
         }
+
     });
+
+
+    /* GAME */
+
+    let health = 100;
+
+    const healthBar = document.getElementById("health");
+    const attackButton = document.getElementById("attackButton");
+    const message = document.getElementById("gameMessage");
+
+
+    attackButton.addEventListener("click", function() {
+
+        if (health <= 0) {
+            return;
+        }
+
+        const damage = Math.floor(Math.random() * 16) + 10;
+
+        health -= damage;
+
+        if (health < 0) {
+            health = 0;
+        }
+
+        healthBar.style.width = health + "%";
+
+
+        if (health > 70) {
+
+            message.innerText =
+                "The Betrayer refuses to accept responsibility.";
+
+        }
+
+        else if (health > 40) {
+
+            message.innerText =
+                "His consequences are catching up with him...";
+
+        }
+
+        else if (health > 0) {
+
+            message.innerText =
+                "He should have thought about this before choosing greed.";
+
+        }
+
+        else {
+
+            message.innerText =
+                "THE BETRAYER HAS FALLEN. TRUST HAS PREVAILED.";
+
+            attackButton.innerText = "DEFEATED";
+
+            attackButton.disabled = true;
+
+        }
+
+    });
+
 </script>
 
 </body>
