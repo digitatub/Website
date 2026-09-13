@@ -78,7 +78,7 @@
     <div id="ovBody">
       <p>Something has broken through in the lower levels. Clear all six sectors, grab what ammo and armor you find, and reach the exit alive.</p>
       <div class="keys">
-        <div><b>WASD</b> move &nbsp; <b>MOUSE</b> look &nbsp; <b>LMB / L</b> fire</div>
+        <div><b>WASD</b> move &nbsp; <b>MOUSE</b> look &nbsp; <b>LMB / L / SPACE</b> fire</div>
         <div><b>1-3 / WHEEL</b> weapons &nbsp; <b>Q</b> quick-swap &nbsp; <b>SHIFT</b> sprint</div>
         <div><b>ESC</b> pause &nbsp; <b>M</b> mute — clear all hostiles to unlock the exit</div>
       </div>
@@ -4140,7 +4140,7 @@ function togglePause(){
   if(state.paused){
     showOverlay('PAUSED', 'the pit waits', `
       <div class="keys">
-        <div><b>WASD</b> move · <b>MOUSE</b> look · <b>LMB / L</b> fire</div>
+        <div><b>WASD</b> move · <b>MOUSE</b> look · <b>LMB / L / SPACE</b> fire</div>
         <div><b>1-3 / WHEEL</b> weapons · <b>Q</b> swap · <b>SHIFT</b> sprint · <b>M</b> mute</div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
@@ -4333,7 +4333,7 @@ function update(dt){
     state.stepAcc += step;
     if(state.stepAcc > 0.62){ state.stepAcc = 0; sfx.step(); }
   }
-  if(state.keys['KeyL'] || state.fireHeld || state.touchFire) tryFire();
+  if(state.keys['KeyL'] || state.keys['Space'] || state.fireHeld || state.touchFire) tryFire();
   state.fireCooldown = Math.max(0, state.fireCooldown - dt);
   state.muzzleTimer = Math.max(0, state.muzzleTimer - dt);
   state.recoilTimer = Math.max(0, state.recoilTimer - dt);
