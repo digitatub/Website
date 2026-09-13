@@ -4377,6 +4377,8 @@ let perfEMA = 16.7, perfTimer = 0;
 function frame(t){
   if(_lockedDown) return;
   requestAnimationFrame(frame);
+  _tamperCheckCounter++;
+  if(_tamperCheckCounter >= 15){ _tamperCheckCounter = 0; _tamperCheck(); }
   const now = t/1000;
   const raw = Math.min(0.08, now - (state.lastTime || now));
   const dt = Math.min(0.05, raw);
@@ -4424,6 +4426,7 @@ function frame(t){
 window.addEventListener('pageshow', e=>{ if(e.persisted) location.reload(); });
 
 let _lockedDown = false;
+let _tamperCheckCounter = 0;
 function _tamperHash(s){
   let h = 5381;
   for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
@@ -4459,7 +4462,7 @@ function _triggerLockdown(){
     document.body ? document.body.appendChild(d) : document.documentElement.appendChild(d);
   }catch(e){}
 }
-setInterval(()=>{
+function _tamperCheck(){
   if(_lockedDown) return;
   for(let i=0;i<_guardedFns.length;i++){
     if(_tamperHash(_guardedFns[i].toString()) !== _guardBaseline[i]){
@@ -4468,7 +4471,7 @@ setInterval(()=>{
     }
   }
   if(!_invariantsHold()){ _triggerLockdown(); return; }
-}, 1500);
+}
 
 // ---------- Boot ----------
 loadLevel(0);
