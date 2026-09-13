@@ -84,7 +84,7 @@
       </div>
       <p style="color:var(--gold);font-size:12.5px;margin-top:10px;">Click once after starting to grab your mouse for looking around.</p>
       <div id="mobileNotice">Touch controls: left = move, right = look, buttons = fire / switch weapon.</div>
-      <div id="buildTag">BUILD 11 — DRY-FIRE FIX · THREAT SCALING · THE BONE RITUAL</div>
+      <div id="buildTag">BUILD 12 — SHOTGUN REBALANCE · DIFFICULTY SELECT</div>
     </div>
     <button class="btn" id="startBtn" data-act="start">Start Mission</button>
   </div>
@@ -96,9 +96,10 @@
 
 /* ========================================================================
    HELL RAISER — single-file raycasting FPS (Doom-style engine)
-   BUILD 11: dry-fire hardening + auto-holster, per-sector threat scaling
-   (S4+), and the Sector 3 Bone Ritual — clear the sector, touch the bone,
-   and Kallie claws up out of the floor to fight.
+   BUILD 12: shotgun rebalance (no more one-taps + range falloff) and a
+   difficulty select — CRY ME A RIVER / NORMAL / GRAPE WITHOUT THE G.
+   All prior behavior intact: 6 sectors, threat scaling, Bile Spitter,
+   the Bone Ritual, dry-fire hardening, world hit markers.
    ======================================================================== */
 
 // ---------- Canvas / framebuffer setup ----------
@@ -1392,11 +1393,14 @@ const state = {
   boneTile: null, kalliePending: false,
   fireHeld: false, touchFire: false, recoilTimer: 0,
   bobPhase: 0, stepAcc: 0, weaponSpin: 0,
+  diffIdx: 1,   // 0 CRY ME A RIVER · 1 NORMAL · 2 GRAPE WITHOUT THE G
 };
 
 const WEAPONS = {
+  // Shotgun rebalanced: 6 pellets × 6 dmg = 36 max (was 7×14=98) + range
+  // falloff in tryFire. No more one-taps; it's a close-range crowd tool now.
   pistol: { name:'PISTOL', damage: 18, fireDelay: 0.28, spread: 0.015, pellets: 1, infiniteAmmo: true },
-  shotgun:{ name:'SHOTGUN', damage: 14, fireDelay: 0.75, spread: 0.11, pellets: 7, infiniteAmmo: false },
+  shotgun:{ name:'SHOTGUN', damage: 6, fireDelay: 0.75, spread: 0.095, pellets: 6, infiniteAmmo: false },
   minigun:{ name:'MINIGUN', damage: 10, fireDelay: 0.065, spread: 0.05, pellets: 1, infiniteAmmo: false },
 };
 let currentWeapon = 'pistol';
@@ -1448,7 +1452,14 @@ function loadLevel(idx){
   }
 }
 
-// ---------- Threat scaling: sectors 4-6 get progressively meaner ----------
+// ---------- Difficulty tiers + per-sector threat scaling ----------
+// Final enemy stats = base × sector scale × difficulty tier (bosses use the
+// gentler bossHp columns so Kallie stays a fight instead of a chore).
+const DIFFS = [
+  { name:'CRY ME A RIVER',     hp:0.70, dmg:0.65, spd:0.92, cd:1.25, bossHp:0.85 },
+  { name:'NORMAL',             hp:1.00, dmg:1.00, spd:1.00, cd:1.00, bossHp:1.00 },
+  { name:'GRAPE WITHOUT THE G',hp:1.35, dmg:1.45, spd:1.10, cd:0.80, bossHp:1.25 },
+];
 const DIFF_SCALE = [
   {hp:1.00, dmg:1.00, spd:1.00, cd:1.00, bossHp:1.00},   // sector 1
   {hp:1.00, dmg:1.00, spd:1.00, cd:1.00, bossHp:1.00},   // sector 2
@@ -1467,12 +1478,13 @@ function spawnEnemy(type, x, y){
     ? { hp: 70, speed: 1.15, dmg: 12, range: 9.5, attackRange: 7.5, meleeRange: 0.85, cooldown: 1.7, frames: spitterFrames, ranged:true, worldH: 1.15, radius: 0.30 }
     : { hp: 420, speed: 2.0, dmg: 22, range: 11, attackRange: 0, meleeRange: 1.1, cooldown: 0.7, frames: kallieFrames, ranged:false, worldH: 1.5, radius: 0.5, boss:true };
   const d = DIFF_SCALE[Math.min(state.levelIndex, DIFF_SCALE.length-1)];
-  const hp = Math.round(cfg.hp * (cfg.boss ? d.bossHp : d.hp));
-  const cd = cfg.cooldown * d.cd;
+  const df = DIFFS[state.diffIdx];
+  const hp = Math.round(cfg.hp * (cfg.boss ? d.bossHp*df.bossHp : d.hp*df.hp));
+  const cd = cfg.cooldown * d.cd * df.cd;
   state.enemies.push({
     type, x, y, hp, maxHp: hp,
-    speed: cfg.speed * d.spd,
-    dmg: Math.round(cfg.dmg * d.dmg),
+    speed: cfg.speed * d.spd * df.spd,
+    dmg: Math.max(1, Math.round(cfg.dmg * d.dmg * df.dmg)),
     sightRange: cfg.range, attackRange: cfg.attackRange, meleeRange: cfg.meleeRange,
     cooldown: cd, atkTimer: rng()*cd, frames: cfg.frames,
     ranged: cfg.ranged, worldH: cfg.worldH, boss: !!cfg.boss,
@@ -1810,7 +1822,7 @@ const sfx = {
     vNoise(v,0,0.3,0.3,'highpass',3000,1400);
     vTone(v,0,'sine',900,320,0.05,0.22);
   },
-  rumble(){ const v=voice(); if(!v)return;        // the floor breaking open
+  rumble(){ const v=voice(); if(!v)return;
     duckMusic(0.35, 1.2);
     vTone(v,0,'sawtooth',46,28,0.5,2.6,3.5);
     vTone(v,0,'sawtooth',69,42,0.3,2.6,4.5);
@@ -2105,7 +2117,6 @@ function damageEnemy(e, dmg){
     }
     if(!state.enemies.some(en=>en.alive)){
       if(state.kalliePending){
-        // Sector 3's true ending: the bone surfaces in her lair
         state.pickups.push({ type:'bone', x:state.boneTile.x, y:state.boneTile.y, alive:true });
         banner('THE PIT QUIETS — A BONE JUTS FROM THE FLOOR OF THE LAIR', '#e8c25c', 3.0);
       } else {
@@ -2127,7 +2138,7 @@ function summonKallie(pk){
   k.emergeT = KALLIE_EMERGE;
   banner('THE FLOOR BREAKS OPEN', '#ff6b6b', 2.2);
   sfx.rumble();
-  startMusic(3);          // the boss track slams in as she claws up
+  startMusic(3);
   state.damageShake = 0.55;
   spawnParticles(pk.x, pk.y, 0.1, 16, [92,72,50], 2.6, 0.9);
 }
@@ -2188,7 +2199,9 @@ function tryFire(){
       hitAny = true;
       const ix = p.x+cx*bestT, iy = p.y+cy*bestT;
       spawnParticles(ix, iy, 0.5+rng()*0.2, 6, [150,18,18], 2.0, 0.3);
-      const wasKill = damageEnemy(bestE, w.damage);
+      // SHOTGUN RANGE FALLOFF — full damage inside 2.5 tiles, decaying to 55%
+      const fall = currentWeapon==='shotgun' ? clamp(1 - (bestT-2.5)*0.15, 0.55, 1) : 1;
+      const wasKill = damageEnemy(bestE, w.damage*fall);
       if(wasKill) killed = true;
       if(!marked){
         marked = true;
@@ -2219,7 +2232,6 @@ function updateEnemies(dt){
       continue;
     }
     if(e.state==='emerging'){
-      // crawling up through the floor — dust and embers boil out of the breach
       e.flashTimer = Math.max(0, e.flashTimer - dt);
       e.emergeT -= dt;
       if(rng() < dt*38 && state.particles.length < 360){
@@ -2407,7 +2419,6 @@ function checkExit(){
   if(Math.floor(p.x)===et.x && Math.floor(p.y)===et.y){
     const hostiles = state.enemies.some(e=>e.alive);
     if(state.kalliePending){
-      // the sector isn't finished until she's been woken and put back down
       const msg = hostiles ? 'HOSTILES REMAIN — CLEAR THE SECTOR'
                            : 'THE MISTRESS STILL SLEEPS — SEEK THE BONE IN HER LAIR';
       if(state.exitWarned !== msg){
@@ -2938,7 +2949,10 @@ function renderHUD(){
   hctx.font = '12px ' + mono;
   hctx.fillStyle = '#b99';
   hctx.fillText('BEST '+String(Math.max(best, state.score)).padStart(6,'0'), w-16, 40);
-  if(muted){ hctx.fillStyle = '#ff6b6b'; hctx.fillText('MUTED [M]', w-16, 56); }
+  hctx.font = '11px ' + mono;
+  hctx.fillStyle = ['#8fae6f','#b99','#ff6b6b'][state.diffIdx];
+  hctx.fillText(DIFFS[state.diffIdx].name, w-16, 56);
+  if(muted){ hctx.fillStyle = '#ff6b6b'; hctx.fillText('MUTED [M]', w-16, 70); }
 
   // minimap — centered on you, rotates with your view
   const mmR = clamp(Math.min(w,h)*0.115, 46, 80);
@@ -2969,7 +2983,7 @@ function renderHUD(){
   }
   for(const pk of state.pickups){
     if(!pk.alive) continue;
-    if(pk.type==='bone'){                      // the bone gets a white blip
+    if(pk.type==='bone'){
       hctx.fillStyle = '#ffffff';
       hctx.fillRect(pk.x - 0.25, pk.y - 0.25, 0.5, 0.5);
       continue;
@@ -3075,7 +3089,7 @@ function renderHUD(){
 }
 
 /* ========================================================================
-   GAME FLOW — overlays, pause, levels, easter eggs, main loop
+   GAME FLOW — menu, difficulty select, overlays, pause, easter eggs, loop
    ======================================================================== */
 const overlay = document.getElementById('overlay');
 const ovTitle = document.getElementById('ovTitle');
@@ -3094,11 +3108,33 @@ function showOverlay(title, sub, bodyHTML, btnText, btnAct){
 }
 function hideOverlay(){ overlay.classList.add('hidden'); }
 
+function showMainMenu(){
+  showOverlay('HELL RAISER', 'a retro raycast shooter', menuBodyHTML, 'Start Mission', 'start');
+}
+function showDifficulty(){
+  // Choose your suffering — tier picked here sets enemy stats for the run
+  showOverlay('CHOOSE YOUR SUFFERING', 'select difficulty', `
+    <p>The pit will be exactly as cruel as you ask it to be. This sets enemy toughness, damage, and aggression for the entire run — and it stacks with the sector threat ramp.</p>
+    <div style="margin-top:10px;display:flex;flex-direction:column;align-items:center;">
+      <button class="btn" data-act="diff0" style="margin-top:6px;">CRY ME A RIVER</button>
+      <p style="margin:6px 0 0;font-size:11.5px;color:#8fae6f;">softest — enemies -30% hp · -35% dmg · slower and lazier</p>
+      <button class="btn" data-act="diff1" style="margin-top:14px;">NORMAL</button>
+      <p style="margin:6px 0 0;font-size:11.5px;color:#b99;">the hell you already know — nothing modified</p>
+      <button class="btn" data-act="diff2" style="margin-top:14px;">GRAPE WITHOUT THE G</button>
+      <p style="margin:6px 0 0;font-size:11.5px;color:#ff6b6b;">nightmare — enemies +35% hp · +45% dmg · faster and meaner</p>
+    </div>`, 'Back', 'back');
+}
+
 overlay.addEventListener('click', e=>{
   const el = e.target.closest('[data-act]');
   if(!el) return;
   const act = el.dataset.act;
-  if(act==='start' || act==='newgame') startGame();
+  if(act==='start' || act==='newgame') showDifficulty();
+  else if(act==='diff0' || act==='diff1' || act==='diff2'){
+    state.diffIdx = +act.slice(4);
+    startGame();
+  }
+  else if(act==='back') showMainMenu();
   else if(act==='next') nextLevel();
   else if(act==='retry' || act==='restart') retryLevel();
   else if(act==='resume') togglePause();
@@ -3165,7 +3201,7 @@ function toMenu(){
   state.mode = 'menu'; state.paused = false;
   state.score = 0; state.player = null;
   loadLevel(0);
-  showOverlay('HELL RAISER', 'a retro raycast shooter', menuBodyHTML, 'Start Mission', 'start');
+  showMainMenu();
 }
 function saveBest(){
   if(state.score > best){
@@ -3245,7 +3281,6 @@ function triggerEgg(name){
 // ---------- Main update ----------
 function update(dt){
   const p = state.player;
-  // ammo can never go negative, no matter what
   if(p.ammoShotgun < 0) p.ammoShotgun = 0;
   if(p.ammoMinigun < 0) p.ammoMinigun = 0;
   // look — standard: view turns toward the mouse / arrow key
