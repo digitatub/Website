@@ -1562,8 +1562,8 @@ const LEVEL5 = buildLevel(25, 17, (rect, put)=>{
   put(6,2,'G');
 });
 
-// SECTOR 6 — THE MAW: pillar arena finale. Kallie returns as gatekeeper,
-// spitters work the corners. Two doors in, kill everything to unlock the exit.
+// SECTOR 6 — THE MAW: pillar arena finale. Ariana is the sole boss here,
+// spitters work the corners. Two doors in, kill everything to unlock her purse.
 const LEVEL6 = buildLevel(25, 17, (rect, put)=>{
   rect(0,8,24,8,'1');  rect(7,8,9,8,'0'); rect(15,8,17,8,'0');
   rect(4,3,5,4,'3');   rect(19,3,20,4,'3');
@@ -1572,7 +1572,6 @@ const LEVEL6 = buildLevel(25, 17, (rect, put)=>{
   rect(6,9,6,11,'2');  rect(6,10,6,10,'0');
   rect(18,9,18,11,'2'); rect(18,10,18,10,'0');
   put(2,14,'P');  put(22,2,'X');
-  put(12,3,'K');
   put(4,2,'S'); put(20,2,'S'); put(4,6,'S'); put(20,6,'S');
   put(9,14,'S'); put(15,14,'S');
   put(12,6,'E'); put(7,10,'F'); put(17,10,'F'); put(2,10,'E'); put(22,10,'E');
@@ -3879,6 +3878,7 @@ function gameOver(){
 const EASTER_EGGS = {
   hell:   { seq:['KeyH','KeyE','KeyL','KeyL'], idx:0 },
   ariana: { seq:['KeyA','KeyR','KeyI','KeyA','KeyN','KeyA'], idx:0 },
+  heal:   { seq:['KeyH','KeyE','KeyA','KeyL'], idx:0 },
 };
 function trackEasterEgg(code){
   for(const name in EASTER_EGGS){
@@ -3905,6 +3905,13 @@ function triggerEgg(name){
     sfx.pickup();
     sfx.weaponSwitch();
     switchLevelSong(YT_EGG_SONG);
+  } else if(name==='heal'){
+    const before = p.health;
+    p.health = Math.min(p.maxHealth, p.health + 25);
+    const gained = Math.round(p.health - before);
+    banner(gained > 0 ? 'HEALED +'+gained+' HP' : 'ALREADY AT FULL HEALTH', '#8fae6f');
+    state.pickupFlash = 0.3;
+    sfx.pickup();
   } else {
     state.score += 250;
     banner('THE PIT ACKNOWLEDGES YOU', '#e8c25c');
