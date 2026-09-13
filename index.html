@@ -1952,7 +1952,7 @@ setInterval(()=>{
   const hDiff = window.outerHeight - window.innerHeight;
   if(wDiff > 180 || hDiff > 180){
     devWarningShown = true;
-    if(state.mode==='playing') banner('CONSOLE ACCESS DETECTED — PLAY FAIR', '#e0a860', 3.0);
+    _triggerLockdown();
   }
 }, 1500);
 
