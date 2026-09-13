@@ -4422,8 +4422,24 @@ function _tamperHash(s){
   for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
   return h;
 }
-const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies];
+const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies, updateProjectiles, updatePickups, hasLineOfSight, acidHitPlayer, updateArianaAI, updateArianaDemonAI, updateTornado];
 const _guardBaseline = _guardedFns.map(fn => _tamperHash(fn.toString()));
+// Values that should be mathematically impossible through normal play, no
+// matter HOW they got changed (edited function, direct state poke via a
+// paused breakpoint, whatever). Checking the result instead of the method
+// closes the gap a mod menu can open by simply avoiding the watched
+// functions above.
+function _invariantsHold(){
+  const p = state.player;
+  if(!p) return true;
+  if(p.maxHealth !== 100) return false;
+  if(p.health > p.maxHealth + 0.01) return false;
+  if(p.speed > 3.05) return false;
+  if(p.radius < 0.18 || p.radius > 0.3) return false;
+  if(p.ammoShotgun > 50) return false;
+  if(p.ammoMinigun > 9999) return false;
+  return true;
+}
 function _triggerLockdown(){
   if(_lockedDown) return;
   _lockedDown = true;
@@ -4444,6 +4460,7 @@ setInterval(()=>{
       return;
     }
   }
+  if(!_invariantsHold()){ _triggerLockdown(); return; }
 }, 1500);
 // Mod menus are very often installed by injecting a brand-new <script> tag
 // into the page (console paste, bookmarklet, or a browser extension like
