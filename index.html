@@ -59,6 +59,7 @@
   #switchBtn{ position:absolute; right:30px; bottom:118px; width:56px; height:56px; border-radius:50%; background:rgba(60,60,90,0.55);
     border:2px solid rgba(190,190,255,0.6); pointer-events:auto; touch-action:none; color:#fff; font-family:var(--mono-font); font-size:10px; display:flex; align-items:center; justify-content:center; }
   #mobileNotice{ font-size:12px; color:#e0a860; margin-top:10px; }
+  #buildTag{ font-size:10px; letter-spacing:2px; color:#7a6f60; margin-top:14px; }
 </style>
 </head>
 <body>
@@ -83,6 +84,7 @@
       </div>
       <p style="color:var(--gold);font-size:12.5px;margin-top:10px;">Click once after starting to grab your mouse for looking around.</p>
       <div id="mobileNotice">Touch controls: left = move, right = look, buttons = fire / switch weapon.</div>
+      <div id="buildTag">BUILD 07 — A = LEFT · D = RIGHT · MOUSE = STANDARD</div>
     </div>
     <button class="btn" id="startBtn" data-act="start">Start Mission</button>
   </div>
@@ -389,14 +391,12 @@ function drawGrunt(tx, frame, hitFlash){
   tx.fillStyle = skin;
   tx.beginPath(); tx.ellipse(32,35,13,14.5,0,0,TAU); tx.fill();
   if(!F){
-    // mottled decay on exposed flesh
     tx.fillStyle = 'rgba(25,35,15,0.4)';
     tx.beginPath(); tx.ellipse(25,38,3,2,0.4,0,TAU); tx.fill();
     tx.beginPath(); tx.ellipse(39,42,2.4,1.7,-0.3,0,TAU); tx.fill();
     tx.fillStyle = 'rgba(90,60,50,0.25)';
     tx.beginPath(); tx.ellipse(27,33,2.2,1.5,0,0,TAU); tx.fill();
   }
-  // battle-scarred chest plate
   tx.fillStyle = armor;
   tx.beginPath();
   tx.moveTo(20,29); tx.lineTo(44,29); tx.lineTo(42,45); tx.lineTo(32,48); tx.lineTo(22,45); tx.closePath();
@@ -407,13 +407,12 @@ function drawGrunt(tx, frame, hitFlash){
     tx.strokeStyle = 'rgba(185,195,165,0.30)'; tx.lineWidth = 0.6;
     tx.beginPath(); tx.moveTo(24,33.5); tx.lineTo(29,38.5); tx.stroke();
     tx.beginPath(); tx.moveTo(36,31); tx.lineTo(39.5,36); tx.stroke();
-    tx.fillStyle = 'rgba(78,10,10,0.6)';       // dried blood run from the collar
+    tx.fillStyle = 'rgba(78,10,10,0.6)';
     tx.fillRect(40,29.5,2,6.5);
     tx.fillRect(41,36,1.1,3.8);
     tx.strokeStyle = 'rgba(10,14,6,0.55)'; tx.lineWidth = 1;
     tx.beginPath(); tx.moveTo(23,36); tx.lineTo(41,36); tx.stroke();
   }
-  // diagonal strap
   tx.strokeStyle = '#191d12'; tx.lineWidth = 2.2;
   tx.beginPath(); tx.moveTo(22,28); tx.lineTo(43,45); tx.stroke();
 
@@ -446,15 +445,14 @@ function drawGrunt(tx, frame, hitFlash){
 
   // arms + weapon
   if(frame===2){
-    // firing: rifle raised
     tx.fillStyle = fleshD;
     tx.fillRect(15,26.5,14,6);
-    tx.fillRect(35,26,15,7.4);                 // mutated arm, thicker
+    tx.fillRect(35,26,15,7.4);
     tx.fillStyle = metal;
     tx.fillRect(42,23,17,5);
     tx.fillRect(49.5,20,3.4,3.4);
     if(!F){
-      tx.fillStyle = '#4e5c3c';                // clawed grip on the forestock
+      tx.fillStyle = '#4e5c3c';
       for(let i=0;i<3;i++){
         tx.beginPath();
         tx.moveTo(43+i*3.2,28.2); tx.lineTo(42+i*3.2,33.2); tx.lineTo(45.2+i*3.2,29.2);
@@ -469,7 +467,6 @@ function drawGrunt(tx, frame, hitFlash){
       tx.closePath(); tx.fill();
     }
   } else {
-    // idle / walk: rifle slung low, claw hand hanging
     tx.fillStyle = fleshD;
     tx.fillRect(14,28+bob,6,16);
     tx.fillRect(44,28-bob,7,16);
@@ -500,7 +497,6 @@ function drawGrunt(tx, frame, hitFlash){
   tx.beginPath(); tx.ellipse(32,19.5,7.4,7.8,0,0,TAU); tx.fill();
   tx.strokeStyle = outline; tx.lineWidth = 0.9;
   tx.beginPath(); tx.ellipse(32,19.5,7.4,7.8,0,0,TAU); tx.stroke();
-  // eye lenses — sickly chemical glow
   for(const ex of [28.4,35.6]){
     if(!F){
       const eg = tx.createRadialGradient(ex,17.6,0.4,ex,17.6,3);
@@ -511,7 +507,6 @@ function drawGrunt(tx, frame, hitFlash){
     tx.strokeStyle = 'rgba(4,7,3,0.85)'; tx.lineWidth = 0.9;
     tx.beginPath(); tx.arc(ex,17.6,2.6,0,TAU); tx.stroke();
   }
-  // filter canister + corrugated hose to the shoulder
   tx.fillStyle = F ? '#ccc' : '#2a2f24';
   tx.beginPath(); tx.ellipse(32,24.5,4.4,2.7,0,0,TAU); tx.fill();
   tx.strokeStyle = outline; tx.lineWidth = 0.7;
@@ -551,7 +546,7 @@ function drawImp(tx, frame, hitFlash){
     tx.fillStyle = F ? '#fff' : hide;
     tx.beginPath(); tx.ellipse(29,45,12.5,6.5,0,0,TAU); tx.fill();
     if(!F){
-      tx.fillStyle = boneD;                    // horn jutting from the heap
+      tx.fillStyle = boneD;
       tx.beginPath(); tx.moveTo(40,42); tx.lineTo(48,34); tx.lineTo(43,44); tx.closePath(); tx.fill();
       tx.fillStyle = 'rgba(255,110,30,0.7)';
       tx.fillRect(24,46,3,1.2);
@@ -594,7 +589,6 @@ function drawImp(tx, frame, hitFlash){
   tx.strokeStyle = outline; tx.lineWidth = 1.3; tx.lineJoin = 'round';
   tx.stroke();
   if(!F){
-    // musculature: creases read as volume, not lines
     tx.strokeStyle = 'rgba(18,4,3,0.55)'; tx.lineWidth = 1.1;
     tx.beginPath(); tx.moveTo(32,25.5); tx.lineTo(32,43); tx.stroke();
     for(let i=0;i<3;i++){
@@ -603,7 +597,6 @@ function drawImp(tx, frame, hitFlash){
     }
     tx.beginPath(); tx.moveTo(26.5,44); tx.lineTo(24.5,34); tx.stroke();
     tx.beginPath(); tx.moveTo(37.5,44); tx.lineTo(39.5,34); tx.stroke();
-    // top light across the traps
     tx.strokeStyle = 'rgba(214,150,120,0.35)'; tx.lineWidth = 1;
     tx.beginPath(); tx.moveTo(24,25); tx.quadraticCurveTo(32,20.5,40,25); tx.stroke();
     // ember fissure — dark split, hot core, bright point
@@ -620,7 +613,6 @@ function drawImp(tx, frame, hitFlash){
   // arms
   tx.fillStyle = hideD;
   if(frame===2){
-    // attack: claws thrown wide and high
     tx.beginPath(); tx.moveTo(23,29); tx.lineTo(6,13); tx.lineTo(10.5,21); tx.lineTo(3.5,19); tx.lineTo(14,30); tx.closePath(); tx.fill();
     tx.beginPath(); tx.moveTo(41,29); tx.lineTo(58,13); tx.lineTo(53.5,21); tx.lineTo(60.5,19); tx.lineTo(50,30); tx.closePath(); tx.fill();
     tx.fillStyle = F ? '#fff' : bone;
@@ -629,7 +621,6 @@ function drawImp(tx, frame, hitFlash){
       tx.beginPath(); tx.moveTo(59-i*2.8,15); tx.lineTo(62-i*3.4,8.5-i); tx.lineTo(56.5-i*2.8,13.5); tx.closePath(); tx.fill();
     }
   } else {
-    // idle/walk: arms low, claws hanging
     tx.beginPath(); tx.moveTo(22,31); tx.lineTo(10,43); tx.lineTo(16,46.5); tx.lineTo(25,36); tx.closePath(); tx.fill();
     tx.beginPath(); tx.moveTo(42,31); tx.lineTo(54,43); tx.lineTo(48,46.5); tx.lineTo(39,36); tx.closePath(); tx.fill();
     tx.fillStyle = F ? '#fff' : bone;
@@ -645,16 +636,16 @@ function drawImp(tx, frame, hitFlash){
   tx.strokeStyle = outline; tx.lineWidth = 1.2;
   tx.beginPath(); tx.arc(32,16.5,9.2,0,TAU); tx.stroke();
   if(!F){
-    tx.fillStyle = 'rgba(12,3,2,0.72)';        // heavy brow shadowing the eyes
+    tx.fillStyle = 'rgba(12,3,2,0.72)';
     tx.beginPath();
     tx.moveTo(23.5,14.8); tx.quadraticCurveTo(32,10.2,40.5,14.8);
     tx.lineTo(40.5,13); tx.quadraticCurveTo(32,8.6,23.5,13);
     tx.closePath(); tx.fill();
-    tx.fillStyle = 'rgba(12,3,2,0.3)';         // cheek hollows
+    tx.fillStyle = 'rgba(12,3,2,0.3)';
     tx.beginPath(); tx.ellipse(26,19,2.6,3.4,0.3,0,TAU); tx.fill();
     tx.beginPath(); tx.ellipse(38,19,2.6,3.4,-0.3,0,TAU); tx.fill();
   }
-  for(const ex of [27.6,36.4]){                // ember eyes in the dark
+  for(const ex of [27.6,36.4]){
     if(!F){
       const eg = tx.createRadialGradient(ex,15.4,0.3,ex,15.4,2.8);
       eg.addColorStop(0,'#ffe9a8'); eg.addColorStop(0.45,'#ff9a2e'); eg.addColorStop(1,'rgba(150,40,0,0)');
@@ -662,7 +653,7 @@ function drawImp(tx, frame, hitFlash){
     } else tx.fillStyle = '#f99';
     tx.beginPath(); tx.arc(ex,15.4,2.3,0,TAU); tx.fill();
   }
-  if(!F){                                      // snarl: split lip + fangs
+  if(!F){
     tx.fillStyle = '#120303';
     tx.beginPath(); tx.ellipse(32,22.5,4.6,2.4,0,0,TAU); tx.fill();
     tx.fillStyle = bone;
@@ -670,7 +661,6 @@ function drawImp(tx, frame, hitFlash){
     tx.beginPath(); tx.moveTo(35.6,21.4); tx.lineTo(34.6,25); tx.lineTo(33.4,21.7); tx.closePath(); tx.fill();
     tx.beginPath(); tx.moveTo(31.4,23.6); tx.lineTo(32,25.4); tx.lineTo(32.6,23.6); tx.closePath(); tx.fill();
   }
-  // horns: swept back, ridged bone
   for(const s of [-1,1]){
     const hx = 32 + s*7.5;
     tx.fillStyle = F ? '#fff' : bodyGradient(tx,hx,8,6,'#d8cec2','#5a5048');
@@ -687,7 +677,7 @@ function drawImp(tx, frame, hitFlash){
       tx.beginPath(); tx.moveTo(32+s*8.3,10.3); tx.lineTo(32+s*10.5,8.4); tx.stroke();
     }
   }
-  if(!F){                                      // spine studs + ember rim light
+  if(!F){
     tx.fillStyle = boneD;
     for(let i=0;i<4;i++){
       const sy = 23.5+i*5.6;
@@ -722,11 +712,11 @@ function drawKallie(tx, frame, hitFlash){
     tx.fillStyle = F ? '#fff' : hide;
     tx.beginPath(); tx.ellipse(28,44,19,7.5,0,0,TAU); tx.fill();
     if(!F){
-      tx.fillStyle = bone;                     // skull tipped out of the heap
+      tx.fillStyle = bone;
       tx.beginPath(); tx.arc(48,42,7.5,0,TAU); tx.fill();
       tx.fillStyle = '#0c0908';
       tx.beginPath(); tx.arc(45.5,40.5,2,0,TAU); tx.fill();
-      tx.fillStyle = bone;                     // jaw slack, fangs out
+      tx.fillStyle = bone;
       tx.beginPath(); tx.moveTo(52,45); tx.lineTo(60,47); tx.lineTo(52,49); tx.closePath(); tx.fill();
       tx.fillStyle = 'rgba(255,110,30,0.75)';
       tx.fillRect(18,48,3.5,1.3);
@@ -751,7 +741,6 @@ function drawKallie(tx, frame, hitFlash){
   tx.fillRect(23,49-bob,6.5,10+bob);
   tx.fillRect(38,49+bob,6.5,10-bob);
   tx.fillRect(47,47-bob,7,12+bob);
-  // paws + claws
   const paw = (px,py,w)=>{
     tx.fillStyle = '#080605';
     tx.fillRect(px,py,w,3.6);
@@ -778,13 +767,12 @@ function drawKallie(tx, frame, hitFlash){
   tx.strokeStyle = outline; tx.lineWidth = 1.6; tx.lineJoin = 'round';
   tx.stroke();
   if(!F){
-    tx.strokeStyle = 'rgba(5,3,2,0.45)'; tx.lineWidth = 1;   // ribcage striations
+    tx.strokeStyle = 'rgba(5,3,2,0.45)'; tx.lineWidth = 1;
     for(let i=0;i<3;i++){
       tx.beginPath(); tx.moveTo(30+i*5.5,31.5); tx.lineTo(27+i*5.5,46); tx.stroke();
     }
-    tx.strokeStyle = 'rgba(5,3,2,0.35)';                     // haunch mass
+    tx.strokeStyle = 'rgba(5,3,2,0.35)';
     tx.beginPath(); tx.ellipse(19,38,7,9,-0.5,0,TAU); tx.stroke();
-    // main ember fissure across the ribs
     tx.strokeStyle = 'rgba(18,4,2,0.9)'; tx.lineWidth = 1.7;
     tx.beginPath(); tx.moveTo(38,31); tx.lineTo(36,37); tx.lineTo(38.5,41); tx.lineTo(36.5,45); tx.stroke();
     tx.strokeStyle = 'rgba(255,120,40,0.95)'; tx.lineWidth = 0.7;
@@ -794,7 +782,7 @@ function drawKallie(tx, frame, hitFlash){
     tx.strokeStyle = 'rgba(255,120,40,0.55)'; tx.lineWidth = 0.6;
     tx.beginPath(); tx.moveTo(46,32); tx.lineTo(48,37); tx.stroke();
     tx.beginPath(); tx.moveTo(17,32); tx.lineTo(15,38); tx.stroke();
-    tx.strokeStyle = 'rgba(255,140,70,0.3)'; tx.lineWidth = 1.2;  // spine backlight
+    tx.strokeStyle = 'rgba(255,140,70,0.3)'; tx.lineWidth = 1.2;
     tx.beginPath(); tx.moveTo(13,43); tx.quadraticCurveTo(20,28.5,33,28); tx.stroke();
   }
 
@@ -829,15 +817,13 @@ function drawKallie(tx, frame, hitFlash){
   tx.strokeStyle = outline; tx.lineWidth = 1.3;
   tx.beginPath(); tx.arc(51,31,9.6,0,TAU); tx.stroke();
   if(!F){
-    // snout: skinless, bone-white, dips on the bite
     tx.fillStyle = bone;
     tx.beginPath();
     tx.moveTo(56,26.5); tx.lineTo(66,30+(frame===2?4:0)); tx.lineTo(56,37); tx.closePath(); tx.fill();
     tx.strokeStyle = outline; tx.lineWidth = 1;
     tx.stroke();
-    tx.fillStyle = '#2a2118';                 // nostril
+    tx.fillStyle = '#2a2118';
     tx.beginPath(); tx.arc(63,29.5+(frame===2?3:0),1.1,0,TAU); tx.fill();
-    // jaw gap + fangs
     tx.fillStyle = '#0c0403';
     if(frame===2){
       tx.beginPath(); tx.moveTo(57,30); tx.lineTo(66,36); tx.lineTo(57,37.5); tx.closePath(); tx.fill();
@@ -851,7 +837,6 @@ function drawKallie(tx, frame, hitFlash){
       tx.beginPath(); tx.moveTo(59,37.2); tx.lineTo(60,33.8); tx.lineTo(61,37); tx.closePath(); tx.fill();
       tx.beginPath(); tx.moveTo(63,36.6); tx.lineTo(64,33.4); tx.lineTo(65,36.4); tx.closePath(); tx.fill();
     }
-    // eye sockets — ember pits in bone
     for(const ex of [47.5,53.5]){
       const eg = tx.createRadialGradient(ex,28.5,0.3,ex,28.5,2.6);
       eg.addColorStop(0,'#ffe9a0'); eg.addColorStop(0.5,'#ff7a1e'); eg.addColorStop(1,'rgba(140,30,0,0)');
@@ -860,14 +845,14 @@ function drawKallie(tx, frame, hitFlash){
       tx.strokeStyle = 'rgba(20,8,4,0.6)'; tx.lineWidth = 0.8;
       tx.beginPath(); tx.arc(ex,28.5,2.9,0,TAU); tx.stroke();
     }
-    tx.fillStyle = 'rgba(60,45,35,0.5)';      // cheek shading
+    tx.fillStyle = 'rgba(60,45,35,0.5)';
     tx.beginPath(); tx.ellipse(46,33,2.4,3.2,0.4,0,TAU); tx.fill();
   }
   // ears: charred shreds
   tx.fillStyle = hideD;
   tx.beginPath(); tx.moveTo(45,23.5); tx.lineTo(42.5,14); tx.lineTo(49,21.5); tx.closePath(); tx.fill();
   tx.beginPath(); tx.moveTo(55,23.5); tx.lineTo(58,14); tx.lineTo(51.5,21.5); tx.closePath(); tx.fill();
-  if(!F){                                      // ember light licking the chest
+  if(!F){
     tx.fillStyle = 'rgba(255,110,30,0.12)';
     tx.beginPath(); tx.ellipse(40,48,14,4,0,0,TAU); tx.fill();
   }
@@ -2444,9 +2429,7 @@ function triggerEgg(name){
 // ---------- Main update ----------
 function update(dt){
   const p = state.player;
-  // look — FIXED: the view now turns TOWARD the mouse. (The old transform
-  // rotated the camera opposite to the input, which mirrored mouse, arrows
-  // and touch-look; all three shared it, so all three are fixed here.)
+  // look — standard: view turns toward the mouse / arrow key
   let rot = state.mouseDX * 0.0021;
   state.mouseDX = 0;
   if(state.keys['ArrowLeft'])  rot -= 2.4*dt;
@@ -2460,10 +2443,10 @@ function update(dt){
     const npy = -p.planeX*s + p.planeY*c;
     p.planeX = npx; p.planeY = npy;
   }
-  // move — strafe inverted per earlier request: A pushes right, D pushes left
+  // move — standard strafe: A goes left, D goes right
   let fwd = ((state.keys['KeyW']||state.keys['ArrowUp'])?1:0) - ((state.keys['KeyS']||state.keys['ArrowDown'])?1:0);
-  let str = (state.keys['KeyA']?1:0) - (state.keys['KeyD']?1:0);
-  if(joy.active){ fwd += -joy.dy; str -= joy.dx; }
+  let str = (state.keys['KeyD']?1:0) - (state.keys['KeyA']?1:0);
+  if(joy.active){ fwd += -joy.dy; str += joy.dx; }
   const l = Math.hypot(fwd, str);
   if(l > 0.01){
     fwd /= Math.max(1,l); str /= Math.max(1,l);
