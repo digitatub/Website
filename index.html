@@ -84,7 +84,7 @@
       </div>
       <p style="color:var(--gold);font-size:12.5px;margin-top:10px;">Click once after starting to grab your mouse for looking around.</p>
       <div id="mobileNotice">Touch controls: left = move, right = look, buttons = fire / switch weapon.</div>
-      <div id="buildTag">BUILD 10 — SIX SECTORS · NEW MOB: BILE SPITTER</div>
+      <div id="buildTag">BUILD 11 — DRY-FIRE FIX · THREAT SCALING · THE BONE RITUAL</div>
     </div>
     <button class="btn" id="startBtn" data-act="start">Start Mission</button>
   </div>
@@ -96,8 +96,9 @@
 
 /* ========================================================================
    HELL RAISER — single-file raycasting FPS (Doom-style engine)
-   BUILD 10: six sectors + the Bile Spitter — a legless demon that retches
-   arcing, corrosive green acid. Debuts in Sector 3, present through 6.
+   BUILD 11: dry-fire hardening + auto-holster, per-sector threat scaling
+   (S4+), and the Sector 3 Bone Ritual — clear the sector, touch the bone,
+   and Kallie claws up out of the floor to fight.
    ======================================================================== */
 
 // ---------- Canvas / framebuffer setup ----------
@@ -830,19 +831,18 @@ function drawImp(tx, frame, hitFlash){
 
 function drawSpitter(tx, frame, hitFlash){
   // BILE SPITTER — a legless demon that drifts on trailing wisps and retches
-  // arcing gob
-s of corrosive green acid. Debuts in Sector 3.
+  // arcing gobs of corrosive green acid. Debuts in Sector 3.
   tx.clearRect(0,0,64,64);
   const F = hitFlash;
-  const bob = frame===1 ? 2.4 : 0;   // floats — whole body rises
+  const bob = frame===1 ? 2.4 : 0;
   const hide  = F ? '#ffffff' : bodyGradient(tx,28,22,16,'#93a96b','#1f2a0e');
   const hideD = F ? '#e4e4e4' : '#18220b';
   const outline = F ? '#ffffff' : '#0a1205';
   const claw  = F ? '#ffffff' : '#b6ae92';
 
-  if(frame!==3) softShadow(tx, 32, 58.5, 12.5, 3.4, 0.42);   // detached — it floats
+  if(frame!==3) softShadow(tx, 32, 58.5, 12.5, 3.4, 0.42);
 
-  if(frame===3){ // burst husk dissolving in its own pool
+  if(frame===3){
     tx.fillStyle = 'rgba(64,150,44,0.5)';
     tx.beginPath(); tx.ellipse(32,54,21,6.5,0,0,TAU); tx.fill();
     tx.fillStyle = 'rgba(110,220,70,0.28)';
@@ -854,17 +854,16 @@ s of corrosive green acid. Debuts in Sector 3.
     tx.strokeStyle = outline; tx.lineWidth = 1.4;
     tx.beginPath(); tx.ellipse(29,44.5,11.5,6,0,0,TAU); tx.stroke();
     if(!F){
-      tx.fillStyle = '#0c1605';                       // slack maw
+      tx.fillStyle = '#0c1605';
       tx.beginPath(); tx.ellipse(35,45,4.2,2.4,0.2,0,TAU); tx.fill();
-      tx.strokeStyle = claw; tx.lineWidth = 2;        // splayed arm
+      tx.strokeStyle = claw; tx.lineWidth = 2;
       tx.beginPath(); tx.moveTo(40,44); tx.lineTo(50,50); tx.stroke();
-      tx.fillStyle = 'rgba(140,255,90,0.5)';          // last dribble
+      tx.fillStyle = 'rgba(140,255,90,0.5)';
       tx.fillRect(34,47.4,1.6,4.5);
     }
     return;
   }
 
-  // trailing wisps beneath the body — what it drifts on
   tx.fillStyle = hideD;
   const wisp = (x0, sw, phase)=>{
     tx.beginPath();
@@ -878,7 +877,6 @@ s of corrosive green acid. Debuts in Sector 3.
   wisp(32, 4.2, bob*0.5);
   wisp(39, 3.4, -bob*0.3);
 
-  // hanging arms — thin, long, clawed
   tx.strokeStyle = hideD; tx.lineWidth = 3.4; tx.lineCap='round';
   tx.beginPath(); tx.moveTo(20,24-bob); tx.quadraticCurveTo(16,32,15,41-bob*0.6); tx.stroke();
   tx.beginPath(); tx.moveTo(44,24-bob); tx.quadraticCurveTo(48,32,49,41-bob*0.6); tx.stroke();
@@ -888,20 +886,19 @@ s of corrosive green acid. Debuts in Sector 3.
     tx.beginPath(); tx.moveTo(47+i*2.4,41-bob*0.6); tx.lineTo(48.5+i*2.4,47-bob*0.6); tx.lineTo(44.5+i*2.4,42-bob*0.6); tx.closePath(); tx.fill();
   }
 
-  // torso — a bloated, legless egg of flesh
   tx.fillStyle = hide;
   tx.beginPath(); tx.ellipse(32,26-bob,15,16.5,0,0,TAU); tx.fill();
   tx.strokeStyle = outline; tx.lineWidth = 1.5;
   tx.stroke();
   if(!F){
-    tx.fillStyle = 'rgba(22,32,10,0.45)';             // mottled decay
+    tx.fillStyle = 'rgba(22,32,10,0.45)';
     tx.beginPath(); tx.ellipse(22,20-bob,3.4,2.4,0.5,0,TAU); tx.fill();
     tx.beginPath(); tx.ellipse(43,23-bob,2.8,2,-0.4,0,TAU); tx.fill();
     tx.beginPath(); tx.ellipse(25,36-bob,2.6,1.8,0.2,0,TAU); tx.fill();
     tx.strokeStyle = 'rgba(16,24,8,0.4)'; tx.lineWidth = 1;
     tx.beginPath(); tx.moveTo(19,28-bob); tx.quadraticCurveTo(22,33,20,37-bob); tx.stroke();
     tx.beginPath(); tx.moveTo(45,28-bob); tx.quadraticCurveTo(43,33,45,36-bob); tx.stroke();
-    for(const p of [[21,30,1.8],[43,32,1.5],[38,15,1.3]]){   // glowing pustules
+    for(const p of [[21,30,1.8],[43,32,1.5],[38,15,1.3]]){
       const pg = tx.createRadialGradient(p[0],p[1]-bob,0.2,p[0],p[1]-bob,p[2]);
       pg.addColorStop(0,'#d6ff9e'); pg.addColorStop(1,'rgba(90,200,40,0)');
       tx.fillStyle = pg;
@@ -909,7 +906,6 @@ s of corrosive green acid. Debuts in Sector 3.
     }
   }
 
-  // the maw — a vertical gash down the body, throat glowing
   const mRx = frame===2 ? 8.6 : 6.4;
   const mRy = frame===2 ? 12 : 10;
   tx.fillStyle = '#0a1804';
@@ -923,12 +919,10 @@ s of corrosive green acid. Debuts in Sector 3.
     tx.fillStyle = '#f99';
     tx.beginPath(); tx.ellipse(32,28-bob,mRx,mRy,0,0,TAU); tx.fill();
   }
-  // teeth studs ringing the maw
   tx.fillStyle = claw;
   for(const t of [[27,19],[32,17.6],[37,19],[27,37.5],[32,39],[37,37.5]]){
     tx.beginPath(); tx.arc(t[0],t[1]-bob,1.2,0,TAU); tx.fill();
   }
-  // drool strands
   if(!F){
     tx.strokeStyle = 'rgba(150,255,100,0.65)'; tx.lineWidth = 1;
     tx.beginPath(); tx.moveTo(28.5,37-bob); tx.lineTo(28,43-bob*0.5); tx.stroke();
@@ -938,7 +932,6 @@ s of corrosive green acid. Debuts in Sector 3.
     tx.beginPath(); tx.arc(36.2,45-bob*0.5,1.1,0,TAU); tx.fill();
   }
 
-  // brow shadow + eyes
   if(!F){
     tx.fillStyle = 'rgba(12,20,6,0.6)';
     tx.beginPath(); tx.moveTo(20,14-bob); tx.quadraticCurveTo(32,9.5-bob,44,14-bob); tx.lineTo(44,12-bob); tx.quadraticCurveTo(32,7.5-bob,20,12-bob); tx.closePath(); tx.fill();
@@ -951,7 +944,6 @@ s of corrosive green acid. Debuts in Sector 3.
     } else tx.fillStyle = '#f99';
     tx.beginPath(); tx.arc(ex,15.5-bob,2.1,0,TAU); tx.fill();
   }
-  // small swept horns
   for(const s of [-1,1]){
     tx.fillStyle = F ? '#fff' : bodyGradient(tx,32+s*9,7,5,'#cfc8b0','#5a5442');
     tx.beginPath();
@@ -963,7 +955,6 @@ s of corrosive green acid. Debuts in Sector 3.
     tx.stroke();
   }
 
-  // attack: the retch — a fan of acid flung wide
   if(frame===2 && !F){
     tx.lineCap = 'round';
     for(let i=0;i<5;i++){
@@ -1228,7 +1219,6 @@ const fireballSprite = spriteFromDraw(tx=>{
   tx.fillStyle = core; tx.beginPath(); tx.arc(32,32,6,0,TAU); tx.fill();
 });
 const acidSprite = spriteFromDraw(tx=>{
-  // retched bile glob — wobbling droplets around a hot core
   tx.clearRect(0,0,64,64);
   const grad = tx.createRadialGradient(32,32,1,32,32,17);
   grad.addColorStop(0,'#f2ffe0'); grad.addColorStop(0.3,'#9dff4e');
@@ -1238,6 +1228,41 @@ const acidSprite = spriteFromDraw(tx=>{
   tx.beginPath(); tx.arc(24,26,2.4,0,TAU); tx.fill();
   tx.beginPath(); tx.arc(41,38,2,0,TAU); tx.fill();
   tx.beginPath(); tx.arc(38,22,1.6,0,TAU); tx.fill();
+});
+// THE BONE — Kallie's tether. Weathered femur with ember-lit cracks, glowing
+// faintly so it reads in the dark of her lair. Touch it. See what wakes up.
+const boneSprite = spriteFromDraw(tx=>{
+  tx.clearRect(0,0,64,64);
+  const aura = tx.createRadialGradient(32,34,2,32,34,22);
+  aura.addColorStop(0,'rgba(255,150,60,0.30)');
+  aura.addColorStop(1,'rgba(255,150,60,0)');
+  tx.fillStyle = aura; tx.beginPath(); tx.arc(32,34,22,0,TAU); tx.fill();
+  tx.save(); tx.translate(32,34); tx.rotate(-0.55);
+  const sh = tx.createLinearGradient(0,-4,0,4);
+  sh.addColorStop(0,'#e9dfc6'); sh.addColorStop(0.55,'#c9bb9a'); sh.addColorStop(1,'#87795c');
+  tx.fillStyle = sh;
+  tx.beginPath();
+  tx.moveTo(-12,-3.4); tx.lineTo(12,-3.4); tx.lineTo(12,3.4); tx.lineTo(-12,3.4);
+  tx.closePath(); tx.fill();
+  const knob = (kx,ky)=>{
+    const g = tx.createRadialGradient(kx-1.4,ky-1.4,0.6,kx,ky,4.6);
+    g.addColorStop(0,'#f2e9d2'); g.addColorStop(0.6,'#bfae8a'); g.addColorStop(1,'#6d6148');
+    tx.fillStyle = g;
+    tx.beginPath(); tx.arc(kx,ky,4.4,0,TAU); tx.fill();
+  };
+  knob(-13.5,-3.6); knob(-14,2.8); knob(13.5,-2.8); knob(14,3.6);
+  tx.strokeStyle = 'rgba(58,48,32,0.55)'; tx.lineWidth = 0.7;
+  tx.beginPath(); tx.moveTo(-6,-2.6); tx.lineTo(-3.5,1.8); tx.lineTo(-5.5,3); tx.stroke();
+  tx.beginPath(); tx.moveTo(5,2.4); tx.lineTo(7.5,-1.4); tx.stroke();
+  tx.strokeStyle = 'rgba(255,244,220,0.35)'; tx.lineWidth = 0.8;
+  tx.beginPath(); tx.moveTo(-11,-2.8); tx.lineTo(10,-2.8); tx.stroke();
+  tx.fillStyle = 'rgba(255,150,60,0.85)';
+  tx.beginPath(); tx.arc(-3.5,1.8,0.8,0,TAU); tx.fill();
+  tx.beginPath(); tx.arc(7.5,-1.4,0.7,0,TAU); tx.fill();
+  tx.restore();
+  tx.fillStyle = 'rgba(255,170,80,0.7)';
+  tx.beginPath(); tx.arc(20,22,1,0,TAU); tx.fill();
+  tx.beginPath(); tx.arc(44,46,0.9,0,TAU); tx.fill();
 });
 
 // ---- world-space hit markers: crimson X = hit, gold X = kill ----
@@ -1275,12 +1300,11 @@ const hitmarkKillSprite = spriteFromDraw(tx=>{
 });
 
 // ---------- Levels ----------
-// Sectors 1-3: original hand-authored string maps (Sector 3 now seeded with
-// Spitters). Sectors 4-6 are painted with buildLevel() — walls as rects,
-// entities as points — which is immune to hand-counted-row mistakes.
+// Sector 3: 'B' marks Kallie's bone — it rises from the floor only after the
+// sector is cleared. Touching it summons her up through the ground.
 const LEVEL1 = ["11111111111111111111111","10000001100000011000001","10P0000110020001100F001","100000011002H0011000001","10000001100000011000001","11101111111101111110111","10000000000000000000001","10000000000000000000001","11000001100000110000011","1103A300000E000004H4011","110303011000G0110404011","11000001100000110000011","11101111111011111110111","100F0000000X0000000A001","11111111111111111111111"];
 const LEVEL2 = ["111111111111111111111111111","100000011000000110000001111","100P0001100E0001100F0001111","100033000H0000G000000001111","10000001100044011A004401111","100000011000000110000001111","100000011000000110000001111","111011111110111111101111111","111011111110111111101111111","10000001100000H1100F0001111","100E0001100F0001100E0001111","100000000000000000000001111","100002011000000110000021111","1000000110000331100000A1111","100000011000000110000001111","111111111111111111110111111","111111111111111111110111111","111111111111111111110000X11","111111111111111111111111111"];
-const LEVEL3 = ["11111111111111111111111","10000011111111111111111","10P0A011111111111111111","10000011100001000000001","1110111110HG01000000X01","11101111100001000000001","1000000010S0010KF000001","1000000000EA010000S0001","10000AE0100001000000001","11111011111111000000001","100000011111110F0000001","10F00H00000000000000001","10000001111111000000001","11111111111111000000001","11111111111111111111111"];
+const LEVEL3 = ["11111111111111111111111","10000011111111111111111","10P0A011111111111111111","10000011100001000000001","1110111110HG01000000X01","11101111100001000000001","1000000010S0010BF000001","1000000000EA010000S0001","10000AE0100001000000001","11111011111111000000001","100000011111110F0000001","10F00H00000000000000001","10000001111111000000001","11111111111111000000001","11111111111111111111111"];
 
 function buildLevel(w, h, paint){
   const g = [];
@@ -1298,12 +1322,12 @@ function buildLevel(w, h, paint){
 
 // SECTOR 4 — BLOOD SECTOR: cathedral nave, spitters hold the side chapels.
 const LEVEL4 = buildLevel(25, 17, (rect, put)=>{
-  rect(0,5,24,5,'1');   rect(11,5,13,5,'0');           // nave divider, center arch
+  rect(0,5,24,5,'1');   rect(11,5,13,5,'0');
   rect(0,11,24,11,'1'); rect(5,11,7,11,'0'); rect(17,11,19,11,'0');
-  rect(8,1,8,4,'2');    rect(8,2,8,3,'0');             // chapel walls + doors
+  rect(8,1,8,4,'2');    rect(8,2,8,3,'0');
   rect(16,1,16,4,'2');  rect(16,2,16,3,'0');
-  rect(12,12,12,15,'2');                                // start-room divider
-  rect(4,7,5,8,'3');  rect(18,7,19,8,'3');             // nave pillars
+  rect(12,12,12,15,'2');
+  rect(4,7,5,8,'3');  rect(18,7,19,8,'3');
   put(2,14,'P');  put(22,2,'X');
   put(4,2,'S'); put(20,3,'S'); put(12,9,'S'); put(21,13,'S');
   put(12,3,'E'); put(6,9,'F'); put(18,3,'F'); put(9,14,'F'); put(21,9,'E');
@@ -1332,14 +1356,14 @@ const LEVEL5 = buildLevel(25, 17, (rect, put)=>{
 // SECTOR 6 — THE MAW: pillar arena finale. Kallie returns as gatekeeper,
 // spitters work the corners. Two doors in, kill everything to unlock the exit.
 const LEVEL6 = buildLevel(25, 17, (rect, put)=>{
-  rect(0,8,24,8,'1');  rect(7,8,9,8,'0'); rect(15,8,17,8,'0');   // arena gates
-  rect(4,3,5,4,'3');   rect(19,3,20,4,'3');                      // arena pillars
+  rect(0,8,24,8,'1');  rect(7,8,9,8,'0'); rect(15,8,17,8,'0');
+  rect(4,3,5,4,'3');   rect(19,3,20,4,'3');
   rect(0,12,24,12,'1'); rect(11,12,13,12,'0');
   rect(12,13,12,15,'2');
-  rect(6,9,6,11,'2');  rect(6,10,6,10,'0');                      // alcove walls + doors
+  rect(6,9,6,11,'2');  rect(6,10,6,10,'0');
   rect(18,9,18,11,'2'); rect(18,10,18,10,'0');
   put(2,14,'P');  put(22,2,'X');
-  put(12,3,'K');                                                  // the gatekeeper
+  put(12,3,'K');
   put(4,2,'S'); put(20,2,'S'); put(4,6,'S'); put(20,6,'S');
   put(9,14,'S'); put(15,14,'S');
   put(12,6,'E'); put(7,10,'F'); put(17,10,'F'); put(2,10,'E'); put(22,10,'E');
@@ -1365,6 +1389,7 @@ const state = {
   paused: false, damageShake: 0,
   levelTimer: 0, banner: null, bannerQueue: [], hitMarker: null, hitMarks: [], enemyBillboards: [],
   exitTile: null, exitWarned: false,
+  boneTile: null, kalliePending: false,
   fireHeld: false, touchFire: false, recoilTimer: 0,
   bobPhase: 0, stepAcc: 0, weaponSpin: 0,
 };
@@ -1390,6 +1415,7 @@ function loadLevel(idx){
   state.acidFlash = 0; state.acidBurn = 0; state.acidTick = 0;
   state.muzzleTimer = 0; state.recoilTimer = 0; state.bobPhase = 0; state.stepAcc = 0;
   state.exitTile = null;
+  state.boneTile = null; state.kalliePending = false;
 
   let px=1.5, py=1.5;
   for(let y=0; y<state.gh; y++){
@@ -1400,6 +1426,7 @@ function loadLevel(idx){
       else if(c==='F'){ spawnEnemy('imp', x+0.5, y+0.5); state.grid[y][x]='0'; }
       else if(c==='S'){ spawnEnemy('spitter', x+0.5, y+0.5); state.grid[y][x]='0'; }
       else if(c==='K'){ spawnEnemy('kallie', x+0.5, y+0.5); state.grid[y][x]='0'; }
+      else if(c==='B'){ state.boneTile = {x:x+0.5, y:y+0.5}; state.kalliePending = true; state.grid[y][x]='0'; }
       else if(c==='H'){ state.pickups.push({type:'health', x:x+0.5, y:y+0.5, amount:35, alive:true}); state.grid[y][x]='0'; }
       else if(c==='A'){ state.pickups.push({type:'ammo', x:x+0.5, y:y+0.5, amount:1, alive:true}); state.grid[y][x]='0'; }
       else if(c==='G'){ state.pickups.push({type:'shotgun', x:x+0.5, y:y+0.5, alive:true}); state.grid[y][x]='0'; }
@@ -1421,6 +1448,16 @@ function loadLevel(idx){
   }
 }
 
+// ---------- Threat scaling: sectors 4-6 get progressively meaner ----------
+const DIFF_SCALE = [
+  {hp:1.00, dmg:1.00, spd:1.00, cd:1.00, bossHp:1.00},   // sector 1
+  {hp:1.00, dmg:1.00, spd:1.00, cd:1.00, bossHp:1.00},   // sector 2
+  {hp:1.00, dmg:1.00, spd:1.00, cd:1.00, bossHp:1.00},   // sector 3
+  {hp:1.30, dmg:1.20, spd:1.08, cd:0.88, bossHp:1.15},   // sector 4 — THREAT I
+  {hp:1.60, dmg:1.40, spd:1.16, cd:0.78, bossHp:1.30},   // sector 5 — THREAT II
+  {hp:1.95, dmg:1.60, spd:1.24, cd:0.68, bossHp:1.45},   // sector 6 — THREAT III
+];
+
 function spawnEnemy(type, x, y){
   const cfg = type==='grunt'
     ? { hp: 55, speed: 1.35, dmg: 9, range: 7.5, attackRange: 6.0, meleeRange: 0.9, cooldown: 1.3, frames: gruntFrames, ranged:true, worldH: 1.05, radius: 0.28 }
@@ -1429,15 +1466,20 @@ function spawnEnemy(type, x, y){
     : type==='spitter'
     ? { hp: 70, speed: 1.15, dmg: 12, range: 9.5, attackRange: 7.5, meleeRange: 0.85, cooldown: 1.7, frames: spitterFrames, ranged:true, worldH: 1.15, radius: 0.30 }
     : { hp: 420, speed: 2.0, dmg: 22, range: 11, attackRange: 0, meleeRange: 1.1, cooldown: 0.7, frames: kallieFrames, ranged:false, worldH: 1.5, radius: 0.5, boss:true };
+  const d = DIFF_SCALE[Math.min(state.levelIndex, DIFF_SCALE.length-1)];
+  const hp = Math.round(cfg.hp * (cfg.boss ? d.bossHp : d.hp));
+  const cd = cfg.cooldown * d.cd;
   state.enemies.push({
-    type, x, y, hp: cfg.hp, maxHp: cfg.hp, speed: cfg.speed, dmg: cfg.dmg,
+    type, x, y, hp, maxHp: hp,
+    speed: cfg.speed * d.spd,
+    dmg: Math.round(cfg.dmg * d.dmg),
     sightRange: cfg.range, attackRange: cfg.attackRange, meleeRange: cfg.meleeRange,
-    cooldown: cfg.cooldown, atkTimer: rng()*cfg.cooldown, frames: cfg.frames,
+    cooldown: cd, atkTimer: rng()*cd, frames: cfg.frames,
     ranged: cfg.ranged, worldH: cfg.worldH, boss: !!cfg.boss,
     state: 'idle', animTimer: 0, animFrame: 0, flashTimer: 0, alive: true,
     radius: cfg.radius, alertTimer: 0,
     attackAnim: 0, weaveT: 0, weaveDir: 1, lungeT: 0, lungeCD: 0,
-    deathT: 0, ghostDone: false,
+    deathT: 0, ghostDone: false, emergeT: 0,
   });
 }
 
@@ -1755,18 +1797,24 @@ const sfx = {
     vTone(v,0,'sawtooth',75,58,0.30,0.45,5.5);
     vNoise(v,0,0.4,0.18,'bandpass',420,300,1.5);
   },
-  retch(x,y){ const v=voice(x,y); if(!v)return;      // spitter spots you
+  retch(x,y){ const v=voice(x,y); if(!v)return;
     vTone(v,0,'sawtooth',68,50,0.26,0.5,7);
     vNoise(v,0,0.45,0.2,'bandpass',320,190,1.4);
   },
-  spit(x,y){ const v=voice(x,y); if(!v)return;       // the retch itself
+  spit(x,y){ const v=voice(x,y); if(!v)return;
     vTone(v,0,'sawtooth',125,55,0.30,0.22,9);
     vNoise(v,0.05,0.28,0.42,'bandpass',900,300,1.2);
     vTone(v,0.06,'sine',430,150,0.12,0.2);
   },
-  sizzle(x,y){ const v=voice(x,y); if(!v)return;     // acid eating at things
+  sizzle(x,y){ const v=voice(x,y); if(!v)return;
     vNoise(v,0,0.3,0.3,'highpass',3000,1400);
     vTone(v,0,'sine',900,320,0.05,0.22);
+  },
+  rumble(){ const v=voice(); if(!v)return;        // the floor breaking open
+    duckMusic(0.35, 1.2);
+    vTone(v,0,'sawtooth',46,28,0.5,2.6,3.5);
+    vTone(v,0,'sawtooth',69,42,0.3,2.6,4.5);
+    vNoise(v,0.1,2.4,0.35,'lowpass',300,90);
   },
   bossRoar(x,y){ const v=voice(x,y); if(!v)return;
     duckMusic(0.3,0.8);
@@ -1962,6 +2010,7 @@ function stopMusic(fade){
    COMBAT, AI, PICKUPS, PROJECTILES, PARTICLES
    ======================================================================== */
 const GHOST_HOLD = 0.9, GHOST_FADE = 3.0, GHOST_RISE = 0.55, GHOST_COL = [185, 205, 240];
+const KALLIE_EMERGE = 2.6;   // seconds she spends clawing up through the floor
 
 function banner(text, color, dur){
   const d = dur || 2.4;
@@ -2026,7 +2075,6 @@ function damagePlayer(d){
   if(p.health <= 0){ p.health = 0; gameOver(); }
 }
 function acidHitPlayer(d){
-  // bile corrosion — damage now, plus a lingering burn and a green screen tint
   const p = state.player;
   if(!p || state.mode!=='playing' || state.paused) return;
   p.health -= d;
@@ -2055,24 +2103,63 @@ function damageEnemy(e, dmg){
       banner('KALLIE HAS BEEN SLAYED', '#e8c25c', 3.2);
       state.pickups.push({ type:'minigun', x:e.x, y:e.y, alive:true });
     }
-    if(!state.enemies.some(en=>en.alive)) banner('SECTOR SECURED — REACH THE EXIT', '#8fae6f');
+    if(!state.enemies.some(en=>en.alive)){
+      if(state.kalliePending){
+        // Sector 3's true ending: the bone surfaces in her lair
+        state.pickups.push({ type:'bone', x:state.boneTile.x, y:state.boneTile.y, alive:true });
+        banner('THE PIT QUIETS — A BONE JUTS FROM THE FLOOR OF THE LAIR', '#e8c25c', 3.0);
+      } else {
+        banner('SECTOR SECURED — REACH THE EXIT', '#8fae6f');
+      }
+    }
     return true;
   }
   sfx.enemyHurt(e.x, e.y);
   return false;
 }
 
+// -------- The Bone Ritual: she claws up through the floor --------
+function summonKallie(pk){
+  state.kalliePending = false;
+  spawnEnemy('kallie', pk.x, pk.y);
+  const k = state.enemies[state.enemies.length-1];
+  k.state = 'emerging';
+  k.emergeT = KALLIE_EMERGE;
+  banner('THE FLOOR BREAKS OPEN', '#ff6b6b', 2.2);
+  sfx.rumble();
+  startMusic(3);          // the boss track slams in as she claws up
+  state.damageShake = 0.55;
+  spawnParticles(pk.x, pk.y, 0.1, 16, [92,72,50], 2.6, 0.9);
+}
+
+// -------- Dry-fire hardening: a dry weapon can NEVER fire --------
+function autoSwapDry(){
+  if(currentWeapon==='pistol') return;
+  lastWeapon = currentWeapon;
+  currentWeapon = 'pistol';
+  banner('DRY — SIDEARM OUT', '#e0a860', 1.4);
+  sfx.weaponSwitch();
+}
+
 function tryFire(){
   if(state.mode!=='playing' || state.paused) return;
-  if(state.fireCooldown > 0) return;
   const w = WEAPONS[currentWeapon], p = state.player;
-  if(currentWeapon==='shotgun'){
-    if(p.ammoShotgun <= 0){ sfx.empty(); state.fireCooldown = 0.3; return; }
-    p.ammoShotgun--;
-  } else if(currentWeapon==='minigun'){
-    if(p.ammoMinigun <= 0){ sfx.empty(); state.fireCooldown = 0.25; return; }
-    p.ammoMinigun--;
+  // AMMO GATE FIRST — before cooldown, before anything else can fire a dry gun
+  if(currentWeapon==='shotgun' && p.ammoShotgun <= 0){
+    sfx.empty();
+    state.fireCooldown = 0.3;
+    autoSwapDry();
+    return;
   }
+  if(currentWeapon==='minigun' && p.ammoMinigun <= 0){
+    sfx.empty();
+    state.fireCooldown = 0.3;
+    autoSwapDry();
+    return;
+  }
+  if(state.fireCooldown > 0) return;
+  if(currentWeapon==='shotgun') p.ammoShotgun--;
+  else if(currentWeapon==='minigun') p.ammoMinigun--;
   sfx[currentWeapon]();
   state.fireCooldown = w.fireDelay;
   state.muzzleTimer = 0.06;
@@ -2122,11 +2209,33 @@ function tryFire(){
 
 function updateEnemies(dt){
   const p = state.player;
+  const dsc = DIFF_SCALE[Math.min(state.levelIndex, DIFF_SCALE.length-1)];
   for(const e of state.enemies){
     if(!e.alive){
       if(!e.ghostDone){
         e.deathT += dt;
         if(e.deathT > GHOST_HOLD + GHOST_FADE) e.ghostDone = true;
+      }
+      continue;
+    }
+    if(e.state==='emerging'){
+      // crawling up through the floor — dust and embers boil out of the breach
+      e.flashTimer = Math.max(0, e.flashTimer - dt);
+      e.emergeT -= dt;
+      if(rng() < dt*38 && state.particles.length < 360){
+        state.particles.push({
+          x: e.x+(rng()-0.5)*1.2, y: e.y+(rng()-0.5)*1.2, z: 0.05,
+          vx:(rng()-0.5)*1.8, vy:(rng()-0.5)*1.8, vz: 1.4+rng()*2.4,
+          life:0.4+rng()*0.5, maxLife:0.9,
+          col: rng()<0.55 ? [92,72,50] : [255,120,40], size:0.03+rng()*0.05,
+        });
+      }
+      state.damageShake = Math.max(state.damageShake, 0.16);
+      if(e.emergeT <= 0){
+        e.state = 'chase';
+        banner('KALLIE HAS RISEN', '#ff6b6b', 2.6);
+        sfx.bossRoar(e.x, e.y);
+        state.damageShake = 0.4;
       }
       continue;
     }
@@ -2152,7 +2261,6 @@ function updateEnemies(dt){
         e.atkTimer = e.cooldown; e.attackAnim = 0.3;
         const ang = Math.atan2(dy,dx) + (rng()-0.5)*0.14;
         if(e.type==='spitter'){
-          // retched bile glob — slow, arcing, corrodes where it lands
           state.projectiles.push({ x:e.x+Math.cos(ang)*0.4, y:e.y+Math.sin(ang)*0.4,
             vx:Math.cos(ang)*6, vy:Math.sin(ang)*6, vz:1.5,
             dmg:e.dmg, worldH:0.22, z:0.72, life:4.5, acid:true, trail:0 });
@@ -2168,7 +2276,7 @@ function updateEnemies(dt){
       e.atkTimer = e.cooldown*1.5; e.attackAnim = 0.35;
       const ang = Math.atan2(dy,dx) + (rng()-0.5)*0.1;
       state.projectiles.push({ x:e.x+Math.cos(ang)*0.6, y:e.y+Math.sin(ang)*0.6,
-        vx:Math.cos(ang)*5.5, vy:Math.sin(ang)*5.5, dmg:16, worldH:0.5, z:0.6, life:5, boss:true, trail:0 });
+        vx:Math.cos(ang)*5.5, vy:Math.sin(ang)*5.5, dmg:Math.round(16*dsc.dmg), worldH:0.5, z:0.6, life:5, boss:true, trail:0 });
       sfx.fireball(e.x, e.y);
     }
     else if(d < e.meleeRange && e.atkTimer <= 0){
@@ -2187,7 +2295,6 @@ function updateEnemies(dt){
         moved = true;
       }
       else if(e.type==='spitter' && d < 3.4){
-        // spitters keep their distance — drift back while the retch reloads
         const spd = e.speed*0.85;
         moveWithCollision(e, -(dx/d)*spd*dt, -(dy/d)*spd*dt);
         moved = true;
@@ -2219,10 +2326,10 @@ function updateProjectiles(dt){
     const pr = state.projectiles[i];
     pr.life -= dt;
     if(pr.life <= 0){ state.projectiles.splice(i,1); continue; }
-    if(pr.acid){                                    // bile arcs under gravity
+    if(pr.acid){
       pr.vz -= 3.6*dt;
       pr.z += pr.vz*dt;
-      if(pr.z <= 0.05){                             // lands: corrosive splash
+      if(pr.z <= 0.05){
         spawnParticles(pr.x, pr.y, 0.06, 9, [110,235,70], 2.4, 0.35);
         sfx.sizzle(pr.x, pr.y);
         if(Math.hypot(pr.x-p.x, pr.y-p.y) < 0.85) acidHitPlayer(Math.max(2, Math.round(pr.dmg*0.6)));
@@ -2250,7 +2357,7 @@ function updateProjectiles(dt){
       state.projectiles.splice(i,1); continue;
     }
     pr.x = nx; pr.y = ny;
-    const zOK = !pr.acid || (pr.z > 0.08 && pr.z < 0.95);   // arcs can pass overhead
+    const zOK = !pr.acid || (pr.z > 0.08 && pr.z < 0.95);
     if(zOK && (Math.hypot(pr.x-p.x, pr.y-p.y) < 0.42 || Math.hypot(mx-p.x, my-p.y) < 0.42)){
       if(pr.acid) acidHitPlayer(pr.dmg);
       else damagePlayer(pr.dmg);
@@ -2265,6 +2372,11 @@ function updatePickups(){
   for(const pk of state.pickups){
     if(!pk.alive) continue;
     if(Math.hypot(pk.x-p.x, pk.y-p.y) > 0.55) continue;
+    if(pk.type==='bone'){
+      pk.alive = false;
+      summonKallie(pk);
+      continue;
+    }
     if(pk.type==='health'){
       if(p.health >= p.maxHealth) continue;
       p.health = Math.min(p.maxHealth, p.health + pk.amount);
@@ -2293,9 +2405,18 @@ function checkExit(){
   const et = state.exitTile, p = state.player;
   if(!et || state.mode!=='playing') return;
   if(Math.floor(p.x)===et.x && Math.floor(p.y)===et.y){
-    if(state.enemies.some(e=>e.alive)){
-      if(!state.exitWarned){
-        state.exitWarned = true;
+    const hostiles = state.enemies.some(e=>e.alive);
+    if(state.kalliePending){
+      // the sector isn't finished until she's been woken and put back down
+      const msg = hostiles ? 'HOSTILES REMAIN — CLEAR THE SECTOR'
+                           : 'THE MISTRESS STILL SLEEPS — SEEK THE BONE IN HER LAIR';
+      if(state.exitWarned !== msg){
+        state.exitWarned = msg;
+        banner(msg, '#e0a860');
+      }
+    } else if(hostiles){
+      if(state.exitWarned !== 'HOSTILES REMAIN — CLEAR THE SECTOR'){
+        state.exitWarned = 'HOSTILES REMAIN — CLEAR THE SECTOR';
         banner('HOSTILES REMAIN — CLEAR THE SECTOR', '#e0a860');
       }
     } else {
@@ -2474,8 +2595,8 @@ function castSprites(horizon, flick){
         state.enemyBillboards.push({ sx:screenX, top:0, w:scale*worldH, ratio:e.hp/e.maxHp, boss:e.boss, ty });
       }
     } else if(s.kind==='p'){
-      img = (o.type==='health'?healthSprite : o.type==='ammo'?ammoSprite : o.type==='shotgun'?shotgunSprite : minigunSprite).data;
-      worldH = 0.55;
+      img = (o.type==='health'?healthSprite : o.type==='ammo'?ammoSprite : o.type==='shotgun'?shotgunSprite : o.type==='bone'?boneSprite : minigunSprite).data;
+      worldH = o.type==='bone' ? 0.6 : 0.55;
       li = (1/(1 + ty*0.10 + ty*ty*0.016))*flick;
     } else if(s.kind==='hm'){
       const hm = o;
@@ -2505,13 +2626,18 @@ function castSprites(horizon, flick){
     const sprH = Math.max(1, scale*worldH), sprW = sprH;
     let bottom = (zc===null) ? horizon + H2/ty : horizon + (0.5-(zc-worldH/2))*(H/ty);
     let top = (zc===null) ? bottom - sprH : horizon + (0.5-(zc+worldH/2))*(H/ty);
-    if(s.kind==='p' && !ghostTint){
+    if(s.kind==='p' && !ghostTint && o.type!=='bone'){   // the bone stays grounded
       const hov = (0.035 + 0.025*Math.sin(now/320 + o.x*5.1))*(H/ty);
       top -= hov; bottom -= hov;
     }
     if(ghostRise > 0){
       const rp = ghostRise * (H/ty);
       top -= rp; bottom -= rp;
+    }
+    if(s.kind==='e' && o.state==='emerging'){
+      // still climbing out of the floor — whole body pushed below ground level
+      const ep = (o.emergeT/KALLIE_EMERGE) * 1.55 * (H/ty);
+      top += ep; bottom += ep;
     }
     if(s.kind==='e' && o.alive && o.hp < o.maxHp && state.enemyBillboards.length){
       const bb = state.enemyBillboards[state.enemyBillboards.length-1];
@@ -2725,13 +2851,13 @@ function renderHUD(){
     g.addColorStop(1, 'rgba(160,0,0,'+(0.55*state.hurtFlash)+')');
     hctx.fillStyle = g; hctx.fillRect(0,0,w,h);
   }
-  if(state.acidFlash > 0){                       // corrosion tint
+  if(state.acidFlash > 0){
     const g = hctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.8);
     g.addColorStop(0, 'rgba(70,200,70,0)');
     g.addColorStop(1, 'rgba(70,200,70,'+(0.5*state.acidFlash)+')');
     hctx.fillStyle = g; hctx.fillRect(0,0,w,h);
   }
-  if(state.acidBurn > 0){                        // faint edge pulse while burning
+  if(state.acidBurn > 0){
     const pulse = 0.05 + 0.04*Math.sin(performance.now()/160);
     hctx.fillStyle = 'rgba(80,210,80,'+pulse+')';
     hctx.fillRect(0,0,w,h);
@@ -2785,10 +2911,19 @@ function renderHUD(){
   hctx.textAlign = 'left';
   hctx.font = '13px ' + mono;
   const trName = MUSIC_TRACKS[Math.min(state.levelIndex, MUSIC_TRACKS.length-1)].name;
+  const threat = state.levelIndex >= 3 ? ' · THREAT '+['I','II','III'][state.levelIndex-3] : '';
   hctx.fillStyle = '#b99';
-  hctx.fillText('SECTOR '+(state.levelIndex+1)+' — '+trName.toUpperCase(), 16, 24);
+  hctx.fillText('SECTOR '+(state.levelIndex+1)+' — '+trName.toUpperCase()+threat, 16, 24);
   const left = state.enemies.filter(e=>e.alive).length;
-  if(left > 0){
+  if(state.kalliePending){
+    if(left > 0){
+      hctx.fillStyle = '#e6dcd4';
+      hctx.fillText('HOSTILES: '+left, 16, 42);
+    } else {
+      hctx.fillStyle = '#e8c25c';
+      hctx.fillText('THE LAIR STIRS — SEEK THE BONE', 16, 42);
+    }
+  } else if(left > 0){
     hctx.fillStyle = '#e6dcd4';
     hctx.fillText('HOSTILES: '+left, 16, 42);
   } else {
@@ -2834,6 +2969,11 @@ function renderHUD(){
   }
   for(const pk of state.pickups){
     if(!pk.alive) continue;
+    if(pk.type==='bone'){                      // the bone gets a white blip
+      hctx.fillStyle = '#ffffff';
+      hctx.fillRect(pk.x - 0.25, pk.y - 0.25, 0.5, 0.5);
+      continue;
+    }
     hctx.fillStyle = pk.type==='health' ? '#ff6b6b' : '#e8c25c';
     hctx.fillRect(pk.x - 0.17, pk.y - 0.17, 0.34, 0.34);
   }
@@ -2909,7 +3049,7 @@ function renderHUD(){
   hctx.fillStyle = '#e8c25c';
   hctx.fillText(wn, w-16, h-52);
   hctx.font = '22px ' + mono;
-  const ammoTxt = currentWeapon==='pistol' ? 'oo'
+  const ammoTxt = currentWeapon==='pistol' ? 'INF'
     : currentWeapon==='shotgun' ? String(p.ammoShotgun)
     : String(p.ammoMinigun);
   hctx.fillStyle = (currentWeapon!=='pistol' && ammoTxt==='0') ? '#d81d1d' : '#e6dcd4';
@@ -3105,6 +3245,9 @@ function triggerEgg(name){
 // ---------- Main update ----------
 function update(dt){
   const p = state.player;
+  // ammo can never go negative, no matter what
+  if(p.ammoShotgun < 0) p.ammoShotgun = 0;
+  if(p.ammoMinigun < 0) p.ammoMinigun = 0;
   // look — standard: view turns toward the mouse / arrow key
   let rot = state.mouseDX * 0.0021;
   state.mouseDX = 0;
@@ -3144,7 +3287,6 @@ function update(dt){
   state.hurtFlash = Math.max(0, state.hurtFlash - dt*1.4);
   state.pickupFlash = Math.max(0, state.pickupFlash - dt);
   state.damageShake = Math.max(0, state.damageShake - dt);
-  // corrosion: green tint decays, the burn keeps chewing
   state.acidFlash = Math.max(0, state.acidFlash - dt*1.2);
   if(state.acidBurn > 0){
     state.acidBurn -= dt;
