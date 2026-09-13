@@ -4409,13 +4409,20 @@ function frame(t){
 /* ========================================================================
    LIVE-TAMPER LOCKOUT — see chat for exact scope/limits.
    Catches: someone using DevTools' Sources panel to live-edit one of the
-   watched functions (e.g. removing wall collision) while the page keeps
-   running, without reloading.
+   watched functions (e.g. removing wall collision), or getting game state
+   into a combination that's mathematically impossible through normal play
+   (god mode, speed hack, infinite ammo), while the page keeps running.
    Does NOT catch: someone editing their own downloaded copy of this file
    (that copy simply won't include this check — nothing can prevent that).
    Does NOT catch: edits made before this check first runs (e.g. via a
-   breakpoint set on load). Not real security — a tripwire, not a lock.
+   breakpoint set on load, or DevTools "Local Overrides"). Not real
+   security — a tripwire, not a lock.
    ======================================================================== */
+// Force a genuine reload if the browser restores this page from back/
+// forward cache — otherwise a stale lockdown (or a stale UN-locked state)
+// from before could get resurrected instead of a clean, current load.
+window.addEventListener('pageshow', e=>{ if(e.persisted) location.reload(); });
+
 let _lockedDown = false;
 function _tamperHash(s){
   let h = 5381;
@@ -4462,20 +4469,6 @@ setInterval(()=>{
   }
   if(!_invariantsHold()){ _triggerLockdown(); return; }
 }, 1500);
-// Mod menus are very often installed by injecting a brand-new <script> tag
-// into the page (console paste, bookmarklet, or a browser extension like
-// Tampermonkey) rather than editing an existing function. This page never
-// legitimately adds script tags after boot, so any that appear are flagged.
-try{
-  new MutationObserver(muts=>{
-    if(_lockedDown) return;
-    for(const m of muts){
-      for(const node of m.addedNodes){
-        if(node.tagName === 'SCRIPT') { _triggerLockdown(); return; }
-      }
-    }
-  }).observe(document.documentElement, { childList:true, subtree:true });
-}catch(e){}
 
 // ---------- Boot ----------
 loadLevel(0);
