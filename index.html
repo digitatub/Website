@@ -1882,7 +1882,7 @@ function spawnEnemy(type, x, y){
     ? { hp: 420, speed: 2.0, dmg: 22, range: 11, attackRange: 0, meleeRange: 1.1, cooldown: 0.7, frames: kallieFrames, ranged:false, worldH: 1.5, radius: 0.5, boss:true }
     : type==='ariana'
     ? { hp: 1680, speed: 1.9, dmg: 6, range: 13, attackRange: 0, meleeRange: 0, cooldown: 0.7, frames: arianaFrames, ranged:false, worldH: 1.55, radius: 0.42, boss:true }
-    : { hp: 5040, speed: 2.6, dmg: 26, range: 15, attackRange: 0, meleeRange: 1.0, cooldown: 0.7, frames: arianaDemonFrames, ranged:false, worldH: 1.6, radius: 0.44, boss:true };
+    : { hp: 5040, speed: 1.6, dmg: 26, range: 15, attackRange: 0, meleeRange: 1.0, cooldown: 0.7, frames: arianaDemonFrames, ranged:false, worldH: 1.6, radius: 0.44, boss:true };
   const d = DIFF_SCALE[Math.min(state.levelIndex, DIFF_SCALE.length-1)];
   const df = DIFFS[state.diffIdx];
   const hp = Math.round(cfg.hp * (cfg.boss ? d.bossHp*df.bossHp : d.hp*df.hp));
@@ -1921,6 +1921,39 @@ window.addEventListener('keydown', e=>{
   trackEasterEgg(e.code);
 });
 window.addEventListener('keyup', e=>{ state.keys[e.code] = false; });
+
+/* ========================================================================
+   LIGHT DETERRENT — NOT REAL SECURITY.
+   This cannot actually stop anyone: the file itself is fully editable by
+   anyone who has it, and no website can reliably block browser DevTools.
+   This only (a) disables right-click and (b) shows a one-time, non-blocking
+   banner if DevTools looks open, as a mild "please don't" nudge — it does
+   NOT pause or restrict gameplay, since the heuristic can false-positive
+   for perfectly innocent players (docked DevTools on another tab, some
+   tablets, etc). Typing the phrase below silences that banner for your own
+   session only — change DEV_SILENCE_CODE to whatever you like; it's not a
+   secret from anyone who reads the source, just a personal "I know" switch.
+   ======================================================================== */
+document.addEventListener('contextmenu', e=>{ e.preventDefault(); });
+let devWarningShown = false, devSilenced = false, devSilenceIdx = 0;
+const DEV_SILENCE_CODE = ['KeyN','KeyO','KeyC','KeyH','KeyE','KeyA','KeyT']; // types as "NOCHEAT"
+window.addEventListener('keydown', e=>{
+  if(e.code === DEV_SILENCE_CODE[devSilenceIdx]){
+    devSilenceIdx++;
+    if(devSilenceIdx === DEV_SILENCE_CODE.length){ devSilenceIdx = 0; devSilenced = true; }
+  } else {
+    devSilenceIdx = (e.code === DEV_SILENCE_CODE[0]) ? 1 : 0;
+  }
+});
+setInterval(()=>{
+  if(devSilenced || devWarningShown) return;
+  const wDiff = window.outerWidth - window.innerWidth;
+  const hDiff = window.outerHeight - window.innerHeight;
+  if(wDiff > 180 || hDiff > 180){
+    devWarningShown = true;
+    if(state.mode==='playing') banner('CONSOLE ACCESS DETECTED — PLAY FAIR', '#e0a860', 3.0);
+  }
+}, 1500);
 
 sceneCanvas.addEventListener('mousedown', ()=>{
   if(state.mode!=='playing' || state.paused) return;
@@ -2956,19 +2989,19 @@ function spawnTornado(e, p){
   e.animFrame = 2;
   const d = DIFF_SCALE[Math.min(state.levelIndex, DIFF_SCALE.length-1)];
   state.tornado = {
-    x: p.x, y: p.y, radius: 0.42,
+    x: e.x, y: e.y, radius: 0.42,
     hp: Math.round(ARIANA_TORNADO_HP * d.hp), maxHp: Math.round(ARIANA_TORNADO_HP * d.hp),
     life: ARIANA_TORNADO_DURATION, tickTimer: 0.1, dmgPerTick: e.dmg,
-    ownerRef: e, spin: 0,
+    ownerRef: e, spin: 0, stuck: false, age: 0,
   };
-  banner('A TORNADO TEARS THROUGH THE ARENA — SHOOT IT DOWN', '#ff6b6b', 2.6);
+  banner('ARIANA HURLS A TORNADO — SHOOT IT DOWN', '#ff6b6b', 2.6);
   sfx.fireball(e.x, e.y);
   spawnParticles(e.x, e.y, 0.5, 16, [180,170,160], 2.8, 0.7);
   state.damageShake = Math.max(state.damageShake, 0.35);
 }
 
-// tornado gone — either the 5s ran out or the player shot it down. Either
-// way Ariana loses her immunity and enters her 10s vulnerable cooldown.
+// tornado gone — either the 5s (post-contact) ran out or the player shot it
+// down. Either way Ariana loses her immunity and enters her cooldown.
 function endTornado(destroyedEarly){
   const tor = state.tornado;
   if(!tor) return;
@@ -2987,22 +3020,37 @@ function endTornado(destroyedEarly){
   }
 }
 
+const TORNADO_APPROACH_SPEED = 2.3; // medium pace on the way in, before it latches on
+
 function updateTornado(dt){
   const tor = state.tornado;
   if(!tor) return;
   const p = state.player;
-  tor.life -= dt;
+  tor.age += dt;
   tor.spin += dt*6;
-  const dx = p.x-tor.x, dy = p.y-tor.y, d = Math.hypot(dx,dy) || 0.001;
-  const spd = 3.3;
-  if(d > 0.1) moveWithCollision(tor, dx/d*spd*dt, dy/d*spd*dt);
-  tor.tickTimer -= dt;
-  if(tor.tickTimer <= 0){
-    tor.tickTimer = 0.5;
-    if(Math.hypot(tor.x-p.x, tor.y-p.y) < 0.95){
+  if(!tor.stuck){
+    // still crossing the arena toward the player — can be shot down any time
+    const dx = p.x-tor.x, dy = p.y-tor.y, d = Math.hypot(dx,dy) || 0.001;
+    if(d > 0.1) moveWithCollision(tor, dx/d*TORNADO_APPROACH_SPEED*dt, dy/d*TORNADO_APPROACH_SPEED*dt);
+    if(d < 0.5){
+      // contact — it latches onto the player and the 5s punishing window starts now
+      tor.stuck = true;
+      tor.life = ARIANA_TORNADO_DURATION;
+      tor.tickTimer = 0;
+      state.damageShake = Math.max(state.damageShake, 0.3);
+      banner('THE TORNADO HAS YOU — SHOOT IT OFF', '#ff6b6b', 2.0);
+    }
+  } else {
+    // latched on — sticks exactly to the player until destroyed or it times out
+    tor.x = p.x; tor.y = p.y;
+    tor.life -= dt;
+    tor.tickTimer -= dt;
+    if(tor.tickTimer <= 0){
+      tor.tickTimer = 0.5;
       damagePlayer(tor.dmgPerTick);
       state.damageShake = Math.max(state.damageShake, 0.28);
     }
+    if(tor.life <= 0) endTornado(false);
   }
   if(state.particles.length < 360 && rng() < dt*20){
     state.particles.push({
@@ -3011,7 +3059,6 @@ function updateTornado(dt){
       life:0.3+rng()*0.3, maxLife:0.6, col:[130,120,105], size:0.025+rng()*0.03,
     });
   }
-  if(tor.life <= 0) endTornado(false);
 }
 
 // -------- ARIANA — DEMON PHASE: no more tornado, she just closes distance
@@ -3075,7 +3122,7 @@ function updateArianaDemonAI(e, dt, p){
   if(e.state==='charging'){
     e.chargeT -= dt;
     e.animFrame = 2;
-    const spd = e.speed * 2.6;
+    const spd = e.speed * 1.9;
     moveWithCollision(e, e.chargeDirX*spd*dt, e.chargeDirY*spd*dt);
     if(!e.hitThisCharge && d < e.meleeRange + 0.3){
       e.hitThisCharge = true;
@@ -3405,7 +3452,8 @@ function castSprites(horizon, flick){
     } else if(s.kind==='to'){
       const tf = Math.floor(now/85) % TORNADO_FRAMES_N;
       img = tornadoFrames[tf].data;
-      worldH = 2.6;
+      const growScale = clamp(o.age/0.4, 0.25, 1);
+      worldH = 2.6 * growScale;
       zc = 0.62;
       li = 1.35;
       emissive = true;
@@ -4195,6 +4243,7 @@ const EASTER_EGGS = {
   hell:   { seq:['KeyH','KeyE','KeyL','KeyL'], idx:0 },
   ariana: { seq:['KeyA','KeyR','KeyI','KeyA','KeyN','KeyA'], idx:0 },
   heal:   { seq:['KeyH','KeyE','KeyA','KeyL'], idx:0 },
+  timeskip: { seq:['KeyT','KeyI','KeyM','KeyE','KeyS','KeyK','KeyI','KeyP'], idx:0 },
 };
 function trackEasterEgg(code){
   for(const name in EASTER_EGGS){
@@ -4228,6 +4277,16 @@ function triggerEgg(name){
     banner(gained > 0 ? 'HEALED +'+gained+' HP' : 'ALREADY AT FULL HEALTH', '#8fae6f');
     state.pickupFlash = 0.3;
     sfx.pickup();
+  } else if(name==='timeskip'){
+    if(state.enemies.some(en=>en.alive && (en.type==='ariana' || en.type==='ariana_demon'))){
+      banner('ARIANA IS ALREADY LOOSE', '#e0a860');
+    } else {
+      state.arianaPending = true;
+      state.arianaPurseSpawned = true;
+      const spawnX = p.x + p.dirX*1.6, spawnY = p.y + p.dirY*1.6;
+      summonAriana({ x: spawnX, y: spawnY });
+      banner('TIMESKIP — ARIANA SUMMONED', '#ff6b6b');
+    }
   } else {
     state.score += 250;
     banner('THE PIT ACKNOWLEDGES YOU', '#e8c25c');
