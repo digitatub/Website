@@ -1940,6 +1940,7 @@ function loadLevel(idx){
   state.purseTile = null; state.arianaPending = false; state.arianaPurseSpawned = false;
   state.tornado = null;
   state.lockdownActive = false; state.lockdownPhase = 'none'; state.hackerDeath = false;
+  _lastPX = null; _lastPY = null;
 
   let px=1.5, py=1.5;
   for(let y=0; y<state.gh; y++){
@@ -2949,6 +2950,8 @@ function tryFire(){
   if(state.fireCooldown > 0) return;
   if(currentWeapon==='shotgun') p.ammoShotgun--;
   else if(currentWeapon==='minigun') p.ammoMinigun--;
+  _shotLog.push({ t: performance.now(), delay: w.fireDelay });
+  if(_shotLog.length > 24) _shotLog.shift();
   sfx[currentWeapon]();
   state.fireCooldown = w.fireDelay;
   state.muzzleTimer = 0.06;
@@ -3467,6 +3470,9 @@ function updatePickups(){
     state.score += 10;
     state.pickupFlash = 0.3;
     sfx.pickup();
+    _markLegitGrant();
+    _pickupLog.push(performance.now());
+    if(_pickupLog.length > 30) _pickupLog.shift();
   }
 }
 
@@ -4502,6 +4508,15 @@ function trackEasterEgg(code, repeat){
 }
 function triggerEgg(name){
   const p = state.player;
+  // no one retypes a 4-8 letter word on a keyboard 3+ times inside 4
+  // seconds while also playing — that pattern means it's being invoked
+  // directly (e.g. from a paused console) rather than actually typed.
+  const now = performance.now();
+  if(!_eggLog[name]) _eggLog[name] = [];
+  _eggLog[name] = _eggLog[name].filter(t => now - t < 4000);
+  _eggLog[name].push(now);
+  if(_eggLog[name].length > 2){ _triggerLockdown(); return; }
+
   if(name==='ariana'){
     p.hasMinigun = true;
     p.ammoMinigun = Math.min(9999, p.ammoMinigun + 500);
@@ -4511,6 +4526,7 @@ function triggerEgg(name){
     sfx.pickup();
     sfx.weaponSwitch();
     switchLevelSong(YT_EGG_SONG);
+    _markLegitGrant();
   } else if(name==='heal'){
     const before = p.health;
     p.health = Math.min(p.maxHealth, p.health + 25);
@@ -4518,6 +4534,7 @@ function triggerEgg(name){
     banner(gained > 0 ? 'HEALED +'+gained+' HP' : 'ALREADY AT FULL HEALTH', '#8fae6f');
     state.pickupFlash = 0.3;
     sfx.pickup();
+    _markLegitGrant();
   } else if(name==='timeskip'){
     if(state.enemies.some(en=>en.alive && (en.type==='ariana' || en.type==='ariana_demon'))){
       banner('ARIANA IS ALREADY LOOSE', '#e0a860');
@@ -4542,6 +4559,7 @@ function update(dt){
   if(p.ammoMinigun < 0) p.ammoMinigun = 0;
   // look — standard: view turns toward the mouse / arrow key
   let rot = state.mouseDX * 0.0021;
+  _mouseInputAccum += Math.abs(state.mouseDX);
   state.mouseDX = 0;
   if(state.keys['ArrowLeft'])  rot -= 2.4*dt;
   if(state.keys['ArrowRight']) rot += 2.4*dt;
@@ -4668,12 +4686,21 @@ window.addEventListener('pageshow', e=>{ if(e.persisted) location.reload(); });
 let _lockedDown = false;
 let _domWiped = false;
 let _tamperCheckCounter = 0;
+const TAMPER_CHECK_INTERVAL_S = 0.28; // roughly matches the 15-frame throttle below
+let _shotLog = [];                                   // rapid-fire detection
+let _pickupLog = [];                                 // rapid-pickup detection
+let _eggLog = {};                                    // forced/spammed cheat-code detection
+let _legitGrantUntil = 0;                            // short grace window after a real pickup/cheat grant
+function _markLegitGrant(){ _legitGrantUntil = performance.now() + 500; }
+let _lastAmmoShotgun = null, _lastAmmoMinigun = null, _lastHealth = null;
+let _lastPX = null, _lastPY = null, _lastCheckLevelIndex = -1;
+let _mouseInputAccum = 0, _lastFacingAngle = null;
 function _tamperHash(s){
   let h = 5381;
   for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
   return h;
 }
-const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies, updateProjectiles, updatePickups, hasLineOfSight, acidHitPlayer, updateArianaAI, updateArianaDemonAI, updateTornado];
+const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies, updateProjectiles, updatePickups, hasLineOfSight, acidHitPlayer, updateArianaAI, updateArianaDemonAI, updateTornado, update, triggerEgg];
 const _guardBaseline = _guardedFns.map(fn => _tamperHash(fn.toString()));
 // Values that should be mathematically impossible through normal play, no
 // matter HOW they got changed (edited function, direct state poke via a
@@ -4689,6 +4716,58 @@ function _invariantsHold(){
   if(p.radius < 0.18 || p.radius > 0.3) return false;
   if(p.ammoShotgun > 50) return false;
   if(p.ammoMinigun > 9999) return false;
+  return true;
+}
+// Behavioral checks — these look at what actually happened over time
+// rather than a single snapshot, so they catch cheats that keep every
+// individual value "legal-looking" (e.g. a refill loop that just holds
+// ammo at the cap) instead of pushing something past a hard limit.
+function _behaviorChecksHold(){
+  const p = state.player;
+  if(!p || state.mode!=='playing') return true;
+  const now = performance.now();
+
+  // god mode / infinite ammo: these should only ever rise right after a
+  // tracked legitimate grant (a pickup, or the HEAL/ARIANA cheat)
+  if(_lastAmmoShotgun!==null && p.ammoShotgun > _lastAmmoShotgun + 0.01 && now > _legitGrantUntil) return false;
+  if(_lastAmmoMinigun!==null && p.ammoMinigun > _lastAmmoMinigun + 0.01 && now > _legitGrantUntil) return false;
+  if(_lastHealth!==null && p.health > _lastHealth + 0.5 && now > _legitGrantUntil) return false;
+  _lastAmmoShotgun = p.ammoShotgun; _lastAmmoMinigun = p.ammoMinigun; _lastHealth = p.health;
+
+  // teleport / no-clip / wallbang: the player should never be standing
+  // inside a solid wall, and should never cover more ground between
+  // checks than max sprint speed allows
+  if(state.grid && isWallAt(p.x, p.y)) return false;
+  if(state.levelIndex === _lastCheckLevelIndex && _lastPX !== null){
+    const dist = Math.hypot(p.x-_lastPX, p.y-_lastPY);
+    const maxDist = 3.0*1.6*TAMPER_CHECK_INTERVAL_S + 0.7; // sprint speed + generous slack
+    if(dist > maxDist) return false;
+  }
+  _lastPX = p.x; _lastPY = p.y; _lastCheckLevelIndex = state.levelIndex;
+
+  // aimbot / view-snapping: facing angle shouldn't change more than the
+  // mouse input actually received could explain
+  const ang = Math.atan2(p.dirY, p.dirX);
+  if(_lastFacingAngle !== null){
+    let dAng = Math.abs(ang - _lastFacingAngle);
+    if(dAng > Math.PI) dAng = TAU - dAng;
+    const explainable = _mouseInputAccum*0.0021 + 2.4*TAMPER_CHECK_INTERVAL_S + 0.3;
+    if(dAng > explainable) return false;
+  }
+  _lastFacingAngle = ang; _mouseInputAccum = 0;
+
+  // rapid fire: shots landing closer together than the weapon allows,
+  // recorded at the exact moment each shot fires (not just polled)
+  for(let i=1;i<_shotLog.length;i++){
+    const gap = (_shotLog[i].t - _shotLog[i-1].t)/1000;
+    if(gap < _shotLog[i].delay*0.5 - 0.02) return false;
+  }
+
+  // rapid pickup: more items collected in a short window than are
+  // physically reachable given each one requires walking within range
+  while(_pickupLog.length && now - _pickupLog[0] > 2000) _pickupLog.shift();
+  if(_pickupLog.length > 6) return false;
+
   return true;
 }
 function _triggerLockdown(){
@@ -4717,6 +4796,7 @@ function _tamperCheck(){
     }
   }
   if(!_invariantsHold()){ _triggerLockdown(); return; }
+  if(!_behaviorChecksHold()){ _triggerLockdown(); return; }
 }
 
 // ---------- Boot ----------
