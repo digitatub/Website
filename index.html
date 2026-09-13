@@ -715,7 +715,7 @@ const state = {
   score: 0, kills: 0, totalEnemiesThisLevel: 0, lastTime: 0,
   fireCooldown: 0, muzzleTimer: 0, weaponBob: 0,
   hurtFlash: 0, pickupFlash: 0, paused: false, damageShake: 0,
-  levelTimer: 0, banner: null, hitMarker: null, enemyBillboards: [],
+  levelTimer: 0, banner: null, bannerQueue: [], hitMarker: null, enemyBillboards: [],
   exitTile: null, exitWarned: false,
   fireHeld: false, touchFire: false, recoilTimer: 0,
   bobPhase: 0, stepAcc: 0, weaponSpin: 0,
@@ -736,7 +736,8 @@ function loadLevel(idx){
   state.grid = map.map(row=>row.split(''));
   state.enemies = []; state.pickups = []; state.projectiles = []; state.particles = [];
   state.fireCooldown = 0; state.levelTimer = 0;
-  state.banner = null; state.hitMarker = null; state.exitWarned = false;
+  state.banner = null; state.bannerQueue.length = 0;
+  state.hitMarker = null; state.exitWarned = false;
   state.hurtFlash = 0; state.pickupFlash = 0; state.damageShake = 0;
   state.muzzleTimer = 0; state.recoilTimer = 0; state.bobPhase = 0; state.stepAcc = 0;
   state.exitTile = null;
@@ -784,6 +785,7 @@ function spawnEnemy(type, x, y){
     state: 'idle', animTimer: 0, animFrame: 0, flashTimer: 0, alive: true,
     radius: cfg.radius, alertTimer: 0,
     attackAnim: 0, weaveT: 0, weaveDir: 1, lungeT: 0, lungeCD: 0,
+    deathT: 0, ghostDone: false,
   });
 }
 
@@ -1142,8 +1144,7 @@ const sfx = {
 };
 
 /* ========================================================================
-   MUSIC — procedural heavy metal, one track per sector (look-ahead
-   scheduler keeps riffs sample-accurate even when the frame rate dips)
+   MUSIC — procedural heavy metal, one track per sector
    ======================================================================== */
 const MUSIC_TRACKS = [
   { name:'Crimson March',  bpm:158, root:41.20,
@@ -1165,7 +1166,7 @@ function initMusicGraph(){
   const ctx = audioCtx(); if(!ctx) return null;
   if(musicNodes) return musicNodes;
   const master = ctx.createGain(); master.gain.value = 0.0001;
-  master.connect(getMasterOut());   // music obeys the global mute too
+  master.connect(getMasterOut());
 
   const shaper = ctx.createWaveShaper();
   const n = 4096, curve = new Float32Array(n), amt = 110;
@@ -1290,8 +1291,18 @@ function stopMusic(fade){
 /* ========================================================================
    COMBAT, AI, PICKUPS, PROJECTILES, PARTICLES
    ======================================================================== */
-function banner(text, color){
-  state.banner = { text, color: color||'#e6dcd4', timer: 2.4, max: 2.4 };
+// ghost timing: corpse holds, then fades upward over GHOST_FADE seconds
+const GHOST_HOLD = 0.9, GHOST_FADE = 3.0, GHOST_RISE = 0.55, GHOST_COL = [185, 205, 240];
+
+function banner(text, color, dur){
+  const d = dur || 2.4;
+  const item = { text, color: color||'#e6dcd4', timer: d, max: d };
+  if(state.banner && state.banner.timer > 0){
+    // queue behind the current banner instead of clobbering it
+    if(state.bannerQueue.length < 3) state.bannerQueue.push(item);
+  } else {
+    state.banner = item;
+  }
 }
 function alertEnemy(e){
   if(!e.alive || e.state!=='idle') return;
@@ -1352,12 +1363,13 @@ function damageEnemy(e, dmg){
   alertNearby(e.x, e.y, 6, true);
   if(e.hp <= 0){
     e.alive = false; e.animFrame = 3; e.hp = 0;
+    e.deathT = 0; e.ghostDone = false;
     state.kills++;
     state.score += e.boss ? 1000 : (e.type==='grunt' ? 100 : 150);
     spawnParticles(e.x, e.y, 0.5, 14, [130,15,15], 2.6, 0.5);
     sfx.enemyDie(e.x, e.y);
     if(e.boss){
-      banner('KALLIE IS SLAIN', '#e8c25c');
+      banner('KALLIE HAS BEEN SLAYED', '#e8c25c', 3.2);
       state.pickups.push({ type:'minigun', x:e.x, y:e.y, alive:true });
     }
     if(!state.enemies.some(en=>en.alive)) banner('SECTOR SECURED — REACH THE EXIT', '#8fae6f');
@@ -1420,7 +1432,14 @@ function tryFire(){
 function updateEnemies(dt){
   const p = state.player;
   for(const e of state.enemies){
-    if(!e.alive) continue;
+    if(!e.alive){
+      // corpse holds, then becomes a rising fading ghost, then stops rendering
+      if(!e.ghostDone){
+        e.deathT += dt;
+        if(e.deathT > GHOST_HOLD + GHOST_FADE) e.ghostDone = true;
+      }
+      continue;
+    }
     e.flashTimer = Math.max(0, e.flashTimer - dt);
     e.atkTimer = Math.max(0, e.atkTimer - dt);
     e.attackAnim = Math.max(0, e.attackAnim - dt);
@@ -1680,10 +1699,18 @@ function castSprites(horizon){
       continue;
     }
     let img, worldH, zc = null;
+    let ghostA = 1, ghostRise = 0, ghostTint = 0;
     if(s.kind==='e'){
       const e = o;
+      if(!e.alive && e.ghostDone) continue;         // ghost fully faded — don't render
       img = e.frames[e.flashTimer>0 ? 4 : e.animFrame].data;
       worldH = e.worldH;
+      if(!e.alive && e.deathT > GHOST_HOLD){
+        const k = clamp((e.deathT - GHOST_HOLD)/GHOST_FADE, 0, 1);
+        ghostA = 1 - k;                             // transparency 0→1 as it fades
+        ghostRise = GHOST_RISE * k;                 // slow upward drift
+        ghostTint = 0.8 * k;                        // drift toward pale spectral blue
+      }
       if(e.alive && e.hp < e.maxHp && ty < 14){
         state.enemyBillboards.push({ sx:screenX, top:0, w:scale*worldH, ratio:e.hp/e.maxHp, boss:e.boss, ty });
       }
@@ -1697,8 +1724,12 @@ function castSprites(horizon){
     }
     const sh = clamp(1.3 - ty*0.085, 0.25, 1);
     const sprH = Math.max(1, scale*worldH), sprW = sprH;
-    const bottom = (zc===null) ? horizon + H2/ty : horizon + (0.5-(zc-worldH/2))*(H/ty);
-    const top = (zc===null) ? bottom - sprH : horizon + (0.5-(zc+worldH/2))*(H/ty);
+    let bottom = (zc===null) ? horizon + H2/ty : horizon + (0.5-(zc-worldH/2))*(H/ty);
+    let top = (zc===null) ? bottom - sprH : horizon + (0.5-(zc+worldH/2))*(H/ty);
+    if(ghostRise > 0){
+      const rp = ghostRise * (H/ty);
+      top -= rp; bottom -= rp;
+    }
     if(s.kind==='e' && o.alive && o.hp < o.maxHp && state.enemyBillboards.length){
       const bb = state.enemyBillboards[state.enemyBillboards.length-1];
       if(bb.ty===ty) bb.top = top;
@@ -1715,9 +1746,21 @@ function castSprites(horizon){
         const o2 = ((texY<<7) + texX)<<2;
         if(img[o2+3] < 60) continue;
         const q = (sy*W+sx)<<2;
-        fbData[q]   = img[o2]*sh;
-        fbData[q+1] = img[o2+1]*sh;
-        fbData[q+2] = img[o2+2]*sh;
+        if(ghostA >= 1 && ghostTint <= 0){
+          fbData[q]   = img[o2]*sh;
+          fbData[q+1] = img[o2+1]*sh;
+          fbData[q+2] = img[o2+2]*sh;
+        } else {
+          // ghost pass: tint toward spectral blue, blend with what's behind
+          const ia = 1 - ghostA;
+          let r = img[o2]*sh,   g = img[o2+1]*sh, b = img[o2+2]*sh;
+          r += (GHOST_COL[0]-r)*ghostTint;
+          g += (GHOST_COL[1]-g)*ghostTint;
+          b += (GHOST_COL[2]-b)*ghostTint;
+          fbData[q]   = fbData[q]*ia   + r*ghostA;
+          fbData[q+1] = fbData[q+1]*ia + g*ghostA;
+          fbData[q+2] = fbData[q+2]*ia + b*ghostA;
+        }
         fbData[q+3] = 255;
       }
     }
@@ -1725,7 +1768,7 @@ function castSprites(horizon){
 }
 
 /* ========================================================================
-   HUD — stats, weapon viewmodel, crosshair, banners, health bars
+   HUD — stats, minimap, weapon viewmodel, crosshair, banners, health bars
    ======================================================================== */
 function drawWeapon(){
   const w = hudW, h = hudH;
@@ -1860,7 +1903,82 @@ function renderHUD(){
     hctx.fillText('CLICK TO CAPTURE MOUSE', w/2, h*0.62);
   }
 
-  // banner
+  // top-left: sector + hostiles
+  hctx.textAlign = 'left';
+  hctx.font = '13px ' + mono;
+  const trName = MUSIC_TRACKS[Math.min(state.levelIndex,2)].name;
+  hctx.fillStyle = '#b99';
+  hctx.fillText('SECTOR '+(state.levelIndex+1)+' — '+trName.toUpperCase(), 16, 24);
+  const left = state.enemies.filter(e=>e.alive).length;
+  if(left > 0){
+    hctx.fillStyle = '#e6dcd4';
+    hctx.fillText('HOSTILES: '+left, 16, 42);
+  } else {
+    hctx.fillStyle = '#e8c25c';
+    hctx.fillText('SECTOR SECURED — REACH THE EXIT', 16, 42);
+  }
+
+  // top-right: score + best + mute
+  hctx.textAlign = 'right';
+  hctx.font = '15px ' + mono;
+  hctx.fillStyle = '#e8c25c';
+  hctx.fillText('SCORE '+String(state.score).padStart(6,'0'), w-16, 24);
+  hctx.font = '12px ' + mono;
+  hctx.fillStyle = '#b99';
+  hctx.fillText('BEST '+String(Math.max(best, state.score)).padStart(6,'0'), w-16, 40);
+  if(muted){ hctx.fillStyle = '#ff6b6b'; hctx.fillText('MUTED [M]', w-16, 56); }
+
+  // ---- minimap: centered on you, rotates with your view ----
+  const mmR = clamp(Math.min(w,h)*0.115, 46, 80);
+  const mmX = w - 18 - mmR, mmY = 72 + mmR;
+  const mmS = mmR / 6.5;   // world tiles from center to rim
+  const mpl = Math.hypot(p.planeX, p.planeY) || 1;
+  hctx.save();
+  hctx.fillStyle = 'rgba(6,4,4,0.74)';
+  hctx.beginPath(); hctx.arc(mmX, mmY, mmR, 0, TAU); hctx.fill();
+  hctx.strokeStyle = 'rgba(216,29,29,0.6)'; hctx.lineWidth = 2;
+  hctx.beginPath(); hctx.arc(mmX, mmY, mmR, 0, TAU); hctx.stroke();
+  hctx.beginPath(); hctx.arc(mmX, mmY, mmR-2, 0, TAU); hctx.clip();
+  // camera-space basis: plane = screen right, dir = forward. Map up = where you look.
+  hctx.translate(mmX, mmY);
+  hctx.transform(mmS*(p.planeX/mpl), -mmS*p.dirX, mmS*(p.planeY/mpl), -mmS*p.dirY, 0, 0);
+  hctx.translate(-p.x, -p.y);
+  const reach = Math.ceil(mmR/mmS) + 1;
+  hctx.fillStyle = 'rgba(185,153,153,0.55)';
+  const gx0 = Math.max(0, Math.floor(p.x - reach)), gx1 = Math.min(state.gw-1, Math.ceil(p.x + reach));
+  const gy0 = Math.max(0, Math.floor(p.y - reach)), gy1 = Math.min(state.gh-1, Math.ceil(p.y + reach));
+  for(let gy=gy0; gy<=gy1; gy++){
+    for(let gx=gx0; gx<=gx1; gx++){
+      if(isWallChar(state.grid[gy][gx])) hctx.fillRect(gx, gy, 1, 1);
+    }
+  }
+  if(state.exitTile){
+    hctx.fillStyle = 'rgba(143,174,111,' + (0.55 + 0.4*Math.sin(performance.now()/280)) + ')';
+    hctx.fillRect(state.exitTile.x + 0.12, state.exitTile.y + 0.12, 0.76, 0.76);
+  }
+  for(const pk of state.pickups){
+    if(!pk.alive) continue;
+    hctx.fillStyle = pk.type==='health' ? '#ff6b6b' : '#e8c25c';
+    hctx.fillRect(pk.x - 0.17, pk.y - 0.17, 0.34, 0.34);
+  }
+  for(const e of state.enemies){
+    if(!e.alive) continue;
+    hctx.fillStyle = e.boss ? '#e8c25c' : '#d81d1d';
+    const es = e.boss ? 0.62 : 0.34;
+    hctx.fillRect(e.x - es/2, e.y - es/2, es, es);
+  }
+  hctx.restore();
+  // player arrow — always points up, because the map rotates around you
+  hctx.fillStyle = '#e6dcd4';
+  hctx.beginPath();
+  hctx.moveTo(mmX, mmY - 7);
+  hctx.lineTo(mmX + 5, mmY + 6);
+  hctx.lineTo(mmX, mmY + 3);
+  hctx.lineTo(mmX - 5, mmY + 6);
+  hctx.closePath();
+  hctx.fill();
+
+  // banner (drawn after the minimap so it stays readable on top)
   if(state.banner && state.banner.timer > 0){
     const b = state.banner;
     const a = Math.min(1, b.timer/0.4, (b.max-b.timer)/0.15);
@@ -1899,31 +2017,6 @@ function renderHUD(){
     hctx.strokeStyle = 'rgba(232,194,92,0.6)'; hctx.lineWidth = 1;
     hctx.strokeRect(bx-2, by-2, bw+4, 12);
   }
-
-  // top-left: sector + hostiles
-  hctx.textAlign = 'left';
-  hctx.font = '13px ' + mono;
-  const trName = MUSIC_TRACKS[Math.min(state.levelIndex,2)].name;
-  hctx.fillStyle = '#b99';
-  hctx.fillText('SECTOR '+(state.levelIndex+1)+' — '+trName.toUpperCase(), 16, 24);
-  const left = state.enemies.filter(e=>e.alive).length;
-  if(left > 0){
-    hctx.fillStyle = '#e6dcd4';
-    hctx.fillText('HOSTILES: '+left, 16, 42);
-  } else {
-    hctx.fillStyle = '#e8c25c';
-    hctx.fillText('SECTOR SECURED — REACH THE EXIT', 16, 42);
-  }
-
-  // top-right: score + best + mute
-  hctx.textAlign = 'right';
-  hctx.font = '15px ' + mono;
-  hctx.fillStyle = '#e8c25c';
-  hctx.fillText('SCORE '+String(state.score).padStart(6,'0'), w-16, 24);
-  hctx.font = '12px ' + mono;
-  hctx.fillStyle = '#b99';
-  hctx.fillText('BEST '+String(Math.max(best, state.score)).padStart(6,'0'), w-16, 40);
-  if(muted){ hctx.fillStyle = '#ff6b6b'; hctx.fillText('MUTED [M]', w-16, 56); }
 
   // bottom-left: health
   const hw = 170, hx = 16, hy = h-34;
@@ -1965,7 +2058,7 @@ function renderHUD(){
 }
 
 /* ========================================================================
-   GAME FLOW — overlays, pause, levels, easter egg, main loop
+   GAME FLOW — overlays, pause, levels, easter eggs, main loop
    ======================================================================== */
 const overlay = document.getElementById('overlay');
 const ovTitle = document.getElementById('ovTitle');
@@ -2095,22 +2188,39 @@ function gameOver(){
     'Retry Sector', 'retry');
 }
 
-// easter egg: type H-E-L-L
-const eggSeq = ['KeyH','KeyE','KeyL','KeyL'];
-let eggIdx = 0;
+// ---------- Easter eggs: type H-E-L-L, or A-R-I-A-N-A ----------
+const EASTER_EGGS = {
+  hell:   { seq:['KeyH','KeyE','KeyL','KeyL'], idx:0 },
+  ariana: { seq:['KeyA','KeyR','KeyI','KeyA','KeyN','KeyA'], idx:0 },
+};
 function trackEasterEgg(code){
-  if(code === eggSeq[eggIdx]){
-    eggIdx++;
-    if(eggIdx === eggSeq.length){
-      eggIdx = 0;
-      if(state.mode==='playing'){
-        state.score += 250;
-        banner('THE PIT ACKNOWLEDGES YOU', '#e8c25c');
-        sfx.pickup();
+  for(const name in EASTER_EGGS){
+    const egg = EASTER_EGGS[name];
+    if(code === egg.seq[egg.idx]){
+      egg.idx++;
+      if(egg.idx === egg.seq.length){
+        egg.idx = 0;
+        if(state.mode==='playing') triggerEgg(name);
       }
+    } else {
+      egg.idx = (code === egg.seq[0]) ? 1 : 0;
     }
+  }
+}
+function triggerEgg(name){
+  const p = state.player;
+  if(name==='ariana'){
+    p.hasMinigun = true;
+    p.ammoMinigun = Math.min(9999, p.ammoMinigun + 500);
+    lastWeapon = currentWeapon;
+    currentWeapon = 'minigun';
+    banner('ARIANA HEARD YOU — MINIGUN + 500 ROUNDS', '#ff6b6b');
+    sfx.pickup();
+    sfx.weaponSwitch();
   } else {
-    eggIdx = (code === eggSeq[0]) ? 1 : 0;
+    state.score += 250;
+    banner('THE PIT ACKNOWLEDGES YOU', '#e8c25c');
+    sfx.pickup();
   }
 }
 
@@ -2129,10 +2239,10 @@ function update(dt){
     const npx = p.planeX*c - p.planeY*s, npy = p.planeX*s + p.planeY*c;
     p.planeX = npx; p.planeY = npy;
   }
-  // move
+  // move — strafe is INVERTED per request: A pushes right, D pushes left
   let fwd = ((state.keys['KeyW']||state.keys['ArrowUp'])?1:0) - ((state.keys['KeyS']||state.keys['ArrowDown'])?1:0);
-  let str = (state.keys['KeyD']?1:0) - (state.keys['KeyA']?1:0);
-  if(joy.active){ fwd += -joy.dy; str += joy.dx; }
+  let str = (state.keys['KeyA']?1:0) - (state.keys['KeyD']?1:0);
+  if(joy.active){ fwd += -joy.dy; str -= joy.dx; }   // touch stick inverted to match
   const l = Math.hypot(fwd, str);
   if(l > 0.01){
     fwd /= Math.max(1,l); str /= Math.max(1,l);
@@ -2156,7 +2266,10 @@ function update(dt){
   state.hurtFlash = Math.max(0, state.hurtFlash - dt*1.4);
   state.pickupFlash = Math.max(0, state.pickupFlash - dt);
   state.damageShake = Math.max(0, state.damageShake - dt);
-  if(state.banner){ state.banner.timer -= dt; if(state.banner.timer <= 0) state.banner = null; }
+  if(state.banner){
+    state.banner.timer -= dt;
+    if(state.banner.timer <= 0) state.banner = state.bannerQueue.shift() || null;
+  }
   if(state.hitMarker){ state.hitMarker.timer -= dt; if(state.hitMarker.timer <= 0) state.hitMarker = null; }
   state.weaponSpin += (currentWeapon==='minigun' && state.fireCooldown > WEAPONS.minigun.fireDelay-0.05 ? 26 : 4)*dt;
   updateEnemies(dt);
