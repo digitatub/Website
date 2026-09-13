@@ -112,7 +112,7 @@ function resize(){
   RENDER_W = 640;
   RENDER_H = Math.max(240, Math.round(RENDER_W / aspect));
   sceneCanvas.width = RENDER_W; sceneCanvas.height = RENDER_H;
-  const dpr = window.devicePixelRatio || 1;           // crisp HUD text on retina
+  const dpr = window.devicePixelRatio || 1;
   hudCanvas.width = Math.round(w * dpr); hudCanvas.height = Math.round(h * dpr);
   hudW = w; hudH = h;
   hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -334,304 +334,542 @@ function bodyGradient(tx, cx, cy, r, lightCol, darkCol){
 }
 
 function drawGrunt(tx, frame, hitFlash){
+  // Possessed trooper — corpse-pale flesh through torn armor, gas mask with
+  // chemical-green lenses and a corrugated hose, one arm mutated into a claw.
   tx.clearRect(0,0,64,64);
-  const bob = frame===1 ? 2 : 0;
-  const bodyFill = hitFlash ? '#fff' : bodyGradient(tx,32,36,17,'#84ad6c','#2c4823');
-  const armorFill = hitFlash ? '#fff' : bodyGradient(tx,32,32,14,'#5b6b4a','#28321f');
-  const darkCol = hitFlash ? '#eee' : '#212f19';
-  const skinCol = hitFlash ? '#fff' : bodyGradient(tx,32,18,10,'#9cc481','#425c34');
-  const outline = hitFlash ? '#fff' : '#0e150b';
-  const metalCol = hitFlash ? '#ddd' : '#3a3d34';
+  const F = hitFlash;
+  const bob = frame===1 ? 1.8 : 0;
+  const skin   = F ? '#ffffff' : bodyGradient(tx,28,33,16,'#97a584','#1e2914');
+  const fleshD = F ? '#e8e8e8' : '#141c0c';
+  const armor  = F ? '#ffffff' : bodyGradient(tx,30,32,12,'#525c43','#121809');
+  const metal  = F ? '#cccccc' : '#2c3126';
+  const cloth  = F ? '#eeeeee' : '#242c1a';
+  const outline= F ? '#ffffff' : '#090d06';
+
   if(frame!==3){
-    tx.fillStyle = 'rgba(0,0,0,0.4)';
-    tx.beginPath(); tx.ellipse(32,60,14,3.2,0,0,TAU); tx.fill();
+    tx.fillStyle = 'rgba(0,0,0,0.45)';
+    tx.beginPath(); tx.ellipse(32,60.5,14,3.2,0,0,TAU); tx.fill();
   }
-  if(frame===3){
-    tx.fillStyle = darkCol;
-    tx.beginPath(); tx.ellipse(32,50,21,10,0,0,TAU); tx.fill();
-    tx.fillStyle = bodyFill;
-    tx.beginPath(); tx.ellipse(32,44,16,9,0,0,TAU); tx.fill();
-    tx.strokeStyle = outline; tx.lineWidth = 1.5;
-    tx.beginPath(); tx.ellipse(32,44,16,9,0,0,TAU); tx.stroke();
-    tx.fillStyle = '#7a1414';
-    tx.fillRect(20,42,8,3); tx.fillRect(34,44,8,3);
-    tx.strokeStyle='rgba(120,10,10,0.5)'; tx.lineWidth=1;
-    tx.beginPath(); tx.moveTo(32,40); tx.lineTo(30,50); tx.stroke();
+
+  if(frame===3){ // slain — pooled blood, body folded, mask staring up
+    tx.fillStyle = 'rgba(28,4,4,0.9)';
+    tx.beginPath(); tx.ellipse(31,53,23,8,0,0,TAU); tx.fill();
+    tx.fillStyle = fleshD;
+    tx.beginPath(); tx.ellipse(30,48,18,8.5,0,0,TAU); tx.fill();
+    tx.fillStyle = F ? '#fff' : skin;
+    tx.beginPath(); tx.ellipse(28,45,13,6.5,0,0,TAU); tx.fill();
+    tx.fillStyle = metal;
+    tx.save(); tx.translate(42,56); tx.rotate(0.45); tx.fillRect(-12,-1.6,24,3.2); tx.restore();
+    tx.fillStyle = F ? '#fff' : bodyGradient(tx,39,45,6,'#6a7458','#1c2412');
+    tx.beginPath(); tx.arc(39,45,5.8,0,TAU); tx.fill();
+    if(!F){
+      const eg = tx.createRadialGradient(40.5,44,0.3,40.5,44,1.6);
+      eg.addColorStop(0,'#d6e89a'); eg.addColorStop(1,'#3c5210');
+      tx.fillStyle = eg;
+      tx.beginPath(); tx.arc(40.5,44,1.5,0,TAU); tx.fill();
+    }
+    tx.strokeStyle = 'rgba(60,6,6,0.75)'; tx.lineWidth = 1.1;
+    tx.beginPath(); tx.moveTo(22,48); tx.lineTo(20,55); tx.stroke();
+    tx.beginPath(); tx.moveTo(35,50); tx.lineTo(37,56); tx.stroke();
     return;
   }
-  tx.fillStyle = darkCol;
-  tx.fillRect(22,54+bob*0.6,8,6-bob*0.3);
-  tx.fillRect(34,54-bob*0.6,8,6+bob*0.3);
-  tx.fillStyle = metalCol;
-  tx.fillRect(22,53+bob*0.6,8,2);
-  tx.fillRect(34,53-bob*0.6,8,2);
-  tx.fillStyle = '#3a4a2e';
-  tx.fillRect(24,44+bob,6,12-bob);
-  tx.fillRect(34,44-bob,6,12+bob);
-  tx.fillStyle = metalCol;
-  tx.beginPath(); tx.arc(27,48+bob*0.5,3,0,TAU); tx.fill();
-  tx.beginPath(); tx.arc(37,48-bob*0.5,3,0,TAU); tx.fill();
-  tx.fillStyle = bodyFill;
-  tx.beginPath(); tx.ellipse(32,35,14,15,0,0,TAU); tx.fill();
-  tx.fillStyle = armorFill;
+
+  // legs: rotted fatigues — tears show pale flesh
+  tx.fillStyle = cloth;
+  tx.fillRect(24,44+bob,7,13-bob);
+  tx.fillRect(33,44-bob,7,13+bob);
+  tx.fillStyle = fleshD;
+  tx.fillRect(26,50+bob,2.6,4.4);
+  tx.fillRect(36,48-bob,2.2,5.2);
+  tx.fillStyle = '#15170f';
+  tx.fillRect(22,56+bob*0.5,9,4.4-bob*0.2);
+  tx.fillRect(33,56-bob*0.5,9,4.4+bob*0.2);
+
+  // torso
+  tx.fillStyle = skin;
+  tx.beginPath(); tx.ellipse(32,35,13,14.5,0,0,TAU); tx.fill();
+  if(!F){
+    // mottled decay on exposed flesh
+    tx.fillStyle = 'rgba(25,35,15,0.4)';
+    tx.beginPath(); tx.ellipse(25,38,3,2,0.4,0,TAU); tx.fill();
+    tx.beginPath(); tx.ellipse(39,42,2.4,1.7,-0.3,0,TAU); tx.fill();
+    tx.fillStyle = 'rgba(90,60,50,0.25)';
+    tx.beginPath(); tx.ellipse(27,33,2.2,1.5,0,0,TAU); tx.fill();
+  }
+  // battle-scarred chest plate
+  tx.fillStyle = armor;
   tx.beginPath();
-  tx.moveTo(21,30); tx.lineTo(43,30); tx.lineTo(41,46); tx.lineTo(32,49); tx.lineTo(23,46); tx.closePath();
+  tx.moveTo(20,29); tx.lineTo(44,29); tx.lineTo(42,45); tx.lineTo(32,48); tx.lineTo(22,45); tx.closePath();
   tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.6;
-  tx.beginPath(); tx.ellipse(32,35,14,15,0,0,TAU); tx.stroke();
-  tx.beginPath();
-  tx.moveTo(21,30); tx.lineTo(43,30); tx.lineTo(41,46); tx.lineTo(32,49); tx.lineTo(23,46); tx.closePath();
+  tx.strokeStyle = outline; tx.lineWidth = 1.1;
   tx.stroke();
-  if(!hitFlash){
-    tx.strokeStyle = 'rgba(10,14,6,0.6)'; tx.lineWidth = 1.2;
-    tx.beginPath(); tx.moveTo(24,36); tx.lineTo(40,36); tx.stroke();
-    tx.beginPath(); tx.moveTo(25,41); tx.lineTo(39,41); tx.stroke();
-    const core = tx.createRadialGradient(32,34,0.5,32,34,3.4);
-    core.addColorStop(0,'#baffb0'); core.addColorStop(1,'#1c6a20');
-    tx.fillStyle = core; tx.beginPath(); tx.arc(32,34,3,0,TAU); tx.fill();
+  if(!F){
+    tx.strokeStyle = 'rgba(185,195,165,0.30)'; tx.lineWidth = 0.6;
+    tx.beginPath(); tx.moveTo(24,33.5); tx.lineTo(29,38.5); tx.stroke();
+    tx.beginPath(); tx.moveTo(36,31); tx.lineTo(39.5,36); tx.stroke();
+    tx.fillStyle = 'rgba(78,10,10,0.6)';       // dried blood run from the collar
+    tx.fillRect(40,29.5,2,6.5);
+    tx.fillRect(41,36,1.1,3.8);
+    tx.strokeStyle = 'rgba(10,14,6,0.55)'; tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(23,36); tx.lineTo(41,36); tx.stroke();
   }
-  tx.fillStyle = armorFill;
-  tx.beginPath(); tx.arc(20,29,5,0,TAU); tx.fill();
-  tx.beginPath(); tx.arc(44,29,5,0,TAU); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.3;
-  tx.beginPath(); tx.arc(20,29,5,0,TAU); tx.stroke();
-  tx.beginPath(); tx.arc(44,29,5,0,TAU); tx.stroke();
-  if(!hitFlash){
-    tx.fillStyle = 'rgba(0,0,0,0.5)';
-    tx.beginPath(); tx.arc(18,27,0.8,0,TAU); tx.fill();
-    tx.beginPath(); tx.arc(22,31,0.8,0,TAU); tx.fill();
-    tx.beginPath(); tx.arc(46,27,0.8,0,TAU); tx.fill();
-    tx.beginPath(); tx.arc(42,31,0.8,0,TAU); tx.fill();
+  // diagonal strap
+  tx.strokeStyle = '#191d12'; tx.lineWidth = 2.2;
+  tx.beginPath(); tx.moveTo(22,28); tx.lineTo(43,45); tx.stroke();
+
+  // shoulders: left pad intact, right torn away — corrupted flesh bulging out
+  tx.fillStyle = armor;
+  tx.beginPath(); tx.arc(20,28,5.2,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1;
+  tx.beginPath(); tx.arc(20,28,5.2,0,TAU); tx.stroke();
+  if(!F){
+    tx.fillStyle = 'rgba(0,0,0,0.4)';
+    tx.beginPath(); tx.arc(18.4,26.4,0.9,0,TAU); tx.fill();
+    tx.beginPath(); tx.arc(21.8,29.6,0.9,0,TAU); tx.fill();
+    const bulge = tx.createRadialGradient(43,26,1,44,28,5.5);
+    bulge.addColorStop(0,'#7e8c69'); bulge.addColorStop(1,'#161f0d');
+    tx.fillStyle = bulge;
+    tx.beginPath(); tx.arc(44,28,4.6,0,TAU); tx.fill();
+    tx.strokeStyle = 'rgba(70,14,14,0.55)'; tx.lineWidth = 0.8;
+    tx.beginPath(); tx.moveTo(42,25.5); tx.lineTo(46,30); tx.stroke();
   }
-  tx.fillStyle = darkCol;
-  tx.fillRect(23,44,18,3.4);
-  if(!hitFlash){
-    tx.fillStyle = metalCol;
-    tx.fillRect(26,45.5,4,5); tx.fillRect(34,45.5,4,5);
-    tx.strokeStyle='rgba(0,0,0,0.5)'; tx.lineWidth=0.7;
-    tx.strokeRect(26,45.5,4,5); tx.strokeRect(34,45.5,4,5);
-    tx.fillStyle='#7a1414'; tx.fillRect(31,44.6,2.2,2.6);
+
+  // belt + pouches
+  tx.fillStyle = '#171a11'; tx.fillRect(22,44.5,20,3);
+  tx.fillStyle = metal;
+  tx.fillRect(25,46,4,4.6); tx.fillRect(35,46,4,4.6);
+  if(!F){
+    tx.strokeStyle = 'rgba(0,0,0,0.5)'; tx.lineWidth = 0.6;
+    tx.strokeRect(25,46,4,4.6); tx.strokeRect(35,46,4,4.6);
+    tx.fillStyle = '#6a1212'; tx.fillRect(30.4,45,3.2,2.4);
   }
-  tx.fillStyle = darkCol;
+
+  // arms + weapon
   if(frame===2){
-    tx.fillRect(15,27,15,6.5);
-    tx.fillRect(34,27,15,6.5);
-    tx.fillStyle = metalCol;
-    tx.fillRect(44,24,16,5);
-    tx.fillRect(50,21,4,4);
-    const flashGrad = tx.createRadialGradient(62,26,1,62,26,11);
-    flashGrad.addColorStop(0,'#fff6c8'); flashGrad.addColorStop(0.55,'#ffb020'); flashGrad.addColorStop(1,'rgba(255,140,0,0)');
-    tx.fillStyle=flashGrad;
-    tx.beginPath(); tx.moveTo(58,20); tx.lineTo(72,14); tx.lineTo(70,26); tx.lineTo(72,38); tx.lineTo(58,32); tx.closePath(); tx.fill();
+    // firing: rifle raised
+    tx.fillStyle = fleshD;
+    tx.fillRect(15,26.5,14,6);
+    tx.fillRect(35,26,15,7.4);                 // mutated arm, thicker
+    tx.fillStyle = metal;
+    tx.fillRect(42,23,17,5);
+    tx.fillRect(49.5,20,3.4,3.4);
+    if(!F){
+      tx.fillStyle = '#4e5c3c';                // clawed grip on the forestock
+      for(let i=0;i<3;i++){
+        tx.beginPath();
+        tx.moveTo(43+i*3.2,28.2); tx.lineTo(42+i*3.2,33.2); tx.lineTo(45.2+i*3.2,29.2);
+        tx.closePath(); tx.fill();
+      }
+      const fg = tx.createRadialGradient(61,25.5,1,61,25.5,10);
+      fg.addColorStop(0,'#fff6cf'); fg.addColorStop(0.5,'#ffb020');
+      fg.addColorStop(1,'rgba(255,120,0,0)');
+      tx.fillStyle = fg;
+      tx.beginPath();
+      tx.moveTo(58,20.5); tx.lineTo(71,15); tx.lineTo(69,25.5); tx.lineTo(71,36); tx.lineTo(58,30.5);
+      tx.closePath(); tx.fill();
+    }
   } else {
-    tx.fillRect(15,28+bob,7,17);
-    tx.fillRect(42,28-bob,7,17);
-    tx.fillStyle = metalCol;
-    tx.save(); tx.translate(32,38); tx.rotate(-0.15);
-    tx.fillRect(-4,-3,30,4.5);
-    tx.fillStyle = '#1a1c16'; tx.fillRect(20,-4,4,7);
+    // idle / walk: rifle slung low, claw hand hanging
+    tx.fillStyle = fleshD;
+    tx.fillRect(14,28+bob,6,16);
+    tx.fillRect(44,28-bob,7,16);
+    tx.fillStyle = metal;
+    tx.save(); tx.translate(32,38); tx.rotate(-0.18);
+    tx.fillRect(-15,-2.2,30,4.4);
+    if(!F){
+      tx.fillStyle = '#101210'; tx.fillRect(11,-3.6,4,7.2);
+      tx.fillStyle = '#0c0e0b'; tx.fillRect(-15,-3.8,4.5,2);
+    }
     tx.restore();
+    if(!F){
+      tx.fillStyle = '#46543a';
+      for(let i=0;i<3;i++){
+        tx.beginPath();
+        tx.moveTo(44+i*2.6,43-bob); tx.lineTo(43+i*2.6,48.5-bob); tx.lineTo(46.2+i*2.6,44-bob);
+        tx.closePath(); tx.fill();
+      }
+    }
   }
-  tx.fillStyle = skinCol;
-  tx.beginPath(); tx.arc(32,18,10.5,0,TAU); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.4;
-  tx.beginPath(); tx.arc(32,18,10.5,0,TAU); tx.stroke();
-  tx.fillStyle = metalCol;
-  tx.beginPath(); tx.ellipse(32,23,5,3,0,0,TAU); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1; tx.beginPath(); tx.ellipse(32,23,5,3,0,0,TAU); tx.stroke();
-  for(const ex of [27.5,36.5]){
-    const eg = tx.createRadialGradient(ex,17,0.5,ex,17,3.2);
-    eg.addColorStop(0,'#fff6c0'); eg.addColorStop(1,'#e8a900');
-    tx.fillStyle = hitFlash ? '#a00' : eg;
-    tx.beginPath(); tx.arc(ex,17,2.6,0,TAU); tx.fill();
-    tx.strokeStyle = 'rgba(0,0,0,0.5)'; tx.lineWidth=0.8;
-    tx.beginPath(); tx.arc(ex,17,2.6,0,TAU); tx.stroke();
+
+  // head: hood + gas mask
+  tx.fillStyle = F ? '#fff' : bodyGradient(tx,32,16,10,'#3a422c','#12180b');
+  tx.beginPath(); tx.arc(32,17,10,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1;
+  tx.beginPath(); tx.arc(32,17,10,0,TAU); tx.stroke();
+  tx.fillStyle = F ? '#eee' : bodyGradient(tx,32,19,8,'#5c6650','#1d2416');
+  tx.beginPath(); tx.ellipse(32,19.5,7.4,7.8,0,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 0.9;
+  tx.beginPath(); tx.ellipse(32,19.5,7.4,7.8,0,0,TAU); tx.stroke();
+  // eye lenses — sickly chemical glow
+  for(const ex of [28.4,35.6]){
+    if(!F){
+      const eg = tx.createRadialGradient(ex,17.6,0.4,ex,17.6,3);
+      eg.addColorStop(0,'#eeffc4'); eg.addColorStop(0.5,'#b4cf46'); eg.addColorStop(1,'#43590f');
+      tx.fillStyle = eg;
+    } else tx.fillStyle = '#f99';
+    tx.beginPath(); tx.arc(ex,17.6,2.6,0,TAU); tx.fill();
+    tx.strokeStyle = 'rgba(4,7,3,0.85)'; tx.lineWidth = 0.9;
+    tx.beginPath(); tx.arc(ex,17.6,2.6,0,TAU); tx.stroke();
   }
-  tx.strokeStyle = metalCol; tx.lineWidth = 1;
-  tx.beginPath(); tx.moveTo(38,10); tx.lineTo(41,4); tx.stroke();
-  tx.fillStyle = '#c94040'; tx.beginPath(); tx.arc(41,3.4,1.2,0,TAU); tx.fill();
+  // filter canister + corrugated hose to the shoulder
+  tx.fillStyle = F ? '#ccc' : '#2a2f24';
+  tx.beginPath(); tx.ellipse(32,24.5,4.4,2.7,0,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 0.7;
+  tx.beginPath(); tx.ellipse(32,24.5,4.4,2.7,0,0,TAU); tx.stroke();
+  if(!F){
+    tx.strokeStyle = '#22281c'; tx.lineWidth = 1.6;
+    tx.beginPath(); tx.moveTo(35.8,24.5);
+    tx.quadraticCurveTo(42,27,45,31); tx.stroke();
+    tx.strokeStyle = 'rgba(120,130,105,0.25)'; tx.lineWidth = 0.5;
+    tx.beginPath(); tx.moveTo(35.8,23.8);
+    tx.quadraticCurveTo(42,26.3,45,30.3); tx.stroke();
+  }
 }
 
 function drawImp(tx, frame, hitFlash){
+  // Ash demon — grey-red hide over anatomical musculature, ridged bone horns,
+  // ember eyes sunk beneath a heavy brow, glowing fissures in the split skin.
   tx.clearRect(0,0,64,64);
-  const bob = frame===1 ? 3 : 0;
-  const bodyFill = hitFlash ? '#fff' : bodyGradient(tx,32,36,17,'#cf5a44','#571414');
-  const darkCol = hitFlash ? '#eee' : '#4a1010';
-  const outline = hitFlash ? '#fff' : '#230606';
-  const clawCol = hitFlash ? '#fff' : '#1a0404';
+  const F = hitFlash;
+  const bob = frame===1 ? 2.6 : 0;
+  const hide  = F ? '#ffffff' : bodyGradient(tx,29,34,17,'#96503f','#240c08');
+  const hideD = F ? '#e6e6e6' : '#1c0806';
+  const bone  = F ? '#ffffff' : '#c9beb0';
+  const boneD = F ? '#bbbbbb' : '#4c4238';
+  const outline = F ? '#ffffff' : '#160503';
+
   if(frame!==3){
-    tx.fillStyle = 'rgba(0,0,0,0.4)';
-    tx.beginPath(); tx.ellipse(32,59,13,3,0,0,TAU); tx.fill();
+    tx.fillStyle = 'rgba(0,0,0,0.45)';
+    tx.beginPath(); tx.ellipse(32,60,13.5,3.2,0,0,TAU); tx.fill();
   }
-  if(frame===3){
-    tx.fillStyle = darkCol;
-    tx.beginPath(); tx.ellipse(32,52,19,8,0,0,TAU); tx.fill();
-    tx.fillStyle = bodyFill;
-    tx.beginPath(); tx.ellipse(32,46,14,7,0,0,TAU); tx.fill();
-    tx.strokeStyle = outline; tx.lineWidth = 1.5;
-    tx.beginPath(); tx.ellipse(32,46,14,7,0,0,TAU); tx.stroke();
-    tx.strokeStyle='rgba(0,0,0,0.4)'; tx.lineWidth=1;
-    tx.beginPath(); tx.moveTo(26,44); tx.lineTo(38,48); tx.stroke();
+
+  if(frame===3){ // slain — folded into itself, embers dying in the cracks
+    tx.fillStyle = 'rgba(25,4,3,0.85)';
+    tx.beginPath(); tx.ellipse(32,53,21,7.5,0,0,TAU); tx.fill();
+    tx.fillStyle = hideD;
+    tx.beginPath(); tx.ellipse(31,47.5,17,8,0,0,TAU); tx.fill();
+    tx.fillStyle = F ? '#fff' : hide;
+    tx.beginPath(); tx.ellipse(29,45,12.5,6.5,0,0,TAU); tx.fill();
+    if(!F){
+      tx.fillStyle = boneD;                    // horn jutting from the heap
+      tx.beginPath(); tx.moveTo(40,42); tx.lineTo(48,34); tx.lineTo(43,44); tx.closePath(); tx.fill();
+      tx.fillStyle = 'rgba(255,110,30,0.7)';
+      tx.fillRect(24,46,3,1.2);
+      tx.fillStyle = 'rgba(255,110,30,0.35)';
+      tx.fillRect(33,48,2.4,1);
+      tx.strokeStyle = 'rgba(120,110,105,0.4)'; tx.lineWidth = 1;
+      tx.beginPath(); tx.moveTo(26,44); tx.quadraticCurveTo(24,39,26.5,35); tx.stroke();
+      tx.beginPath(); tx.moveTo(37,45); tx.quadraticCurveTo(40,40,38,36); tx.stroke();
+    }
     return;
   }
-  if(!hitFlash){
-    tx.strokeStyle = darkCol; tx.lineWidth = 4; tx.lineCap='round';
-    tx.beginPath();
-    tx.moveTo(32,46);
-    tx.quadraticCurveTo(44+bob, 52, 50-bob, 42);
-    tx.stroke();
-    tx.fillStyle = clawCol;
-    tx.beginPath(); tx.moveTo(50-bob,42); tx.lineTo(55-bob,38); tx.lineTo(52-bob,45); tx.closePath(); tx.fill();
+
+  // tail dragged behind, barbed
+  tx.strokeStyle = hideD; tx.lineWidth = 4.2; tx.lineCap = 'round';
+  tx.beginPath();
+  tx.moveTo(33,45);
+  tx.quadraticCurveTo(45+bob,52, 51-bob,42);
+  tx.stroke();
+  tx.fillStyle = boneD;
+  tx.beginPath(); tx.moveTo(51-bob,42); tx.lineTo(56.5-bob,37); tx.lineTo(53-bob,45.5); tx.closePath(); tx.fill();
+
+  // digitigrade legs + hoof claws
+  tx.fillStyle = hideD;
+  tx.fillRect(23,44+bob,6.2,11-bob);
+  tx.fillRect(35,44-bob,6.2,11+bob);
+  if(!F){
+    tx.strokeStyle = 'rgba(180,110,90,0.25)'; tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(24.5,47+bob); tx.lineTo(24.5,53+bob); tx.stroke();
+    tx.beginPath(); tx.moveTo(39.5,47-bob); tx.lineTo(39.5,53-bob); tx.stroke();
   }
-  tx.fillStyle = darkCol;
-  tx.fillRect(23,45+bob,6,11-bob);
-  tx.fillRect(35,45-bob,6,11+bob);
-  tx.fillStyle = clawCol;
-  tx.beginPath(); tx.moveTo(21,56+bob*0.5); tx.lineTo(29,56+bob*0.5); tx.lineTo(25,60); tx.closePath(); tx.fill();
-  tx.beginPath(); tx.moveTo(35,56-bob*0.5); tx.lineTo(43,56-bob*0.5); tx.lineTo(39,60); tx.closePath(); tx.fill();
-  tx.fillStyle = bodyFill;
-  tx.beginPath(); tx.moveTo(20,46); tx.lineTo(24,24); tx.lineTo(32,18); tx.lineTo(40,24); tx.lineTo(44,46); tx.closePath(); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.6; tx.lineJoin='round';
-  tx.beginPath(); tx.moveTo(20,46); tx.lineTo(24,24); tx.lineTo(32,18); tx.lineTo(40,24); tx.lineTo(44,46); tx.closePath(); tx.stroke();
-  if(!hitFlash){
-    tx.strokeStyle = 'rgba(20,4,4,0.55)'; tx.lineWidth = 1.2;
-    tx.beginPath(); tx.moveTo(32,26); tx.lineTo(32,44); tx.stroke();
+  tx.fillStyle = boneD;
+  tx.beginPath(); tx.moveTo(21,55+bob*0.5); tx.lineTo(29.5,55+bob*0.5); tx.lineTo(25.5,60); tx.closePath(); tx.fill();
+  tx.beginPath(); tx.moveTo(34.5,55-bob*0.5); tx.lineTo(43,55-bob*0.5); tx.lineTo(39,60); tx.closePath(); tx.fill();
+
+  // torso: wedge of muscle
+  tx.fillStyle = hide;
+  tx.beginPath();
+  tx.moveTo(19,46); tx.lineTo(23,23); tx.quadraticCurveTo(32,17,41,23); tx.lineTo(45,46);
+  tx.closePath(); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.3; tx.lineJoin = 'round';
+  tx.stroke();
+  if(!F){
+    // musculature: creases read as volume, not lines
+    tx.strokeStyle = 'rgba(18,4,3,0.55)'; tx.lineWidth = 1.1;
+    tx.beginPath(); tx.moveTo(32,25.5); tx.lineTo(32,43); tx.stroke();
     for(let i=0;i<3;i++){
-      tx.beginPath(); tx.moveTo(32,29+i*5); tx.lineTo(26,31+i*5); tx.stroke();
-      tx.beginPath(); tx.moveTo(32,29+i*5); tx.lineTo(38,31+i*5); tx.stroke();
+      tx.beginPath(); tx.moveTo(32,28.5+i*5); tx.lineTo(25.5,30.5+i*5); tx.stroke();
+      tx.beginPath(); tx.moveTo(32,28.5+i*5); tx.lineTo(38.5,30.5+i*5); tx.stroke();
     }
-    tx.strokeStyle = 'rgba(255,120,40,0.35)'; tx.lineWidth = 1;
-    tx.beginPath(); tx.moveTo(26,32); tx.lineTo(23,40); tx.stroke();
-    tx.beginPath(); tx.moveTo(39,30); tx.lineTo(41,38); tx.stroke();
+    tx.beginPath(); tx.moveTo(26.5,44); tx.lineTo(24.5,34); tx.stroke();
+    tx.beginPath(); tx.moveTo(37.5,44); tx.lineTo(39.5,34); tx.stroke();
+    // top light across the traps
+    tx.strokeStyle = 'rgba(214,150,120,0.35)'; tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(24,25); tx.quadraticCurveTo(32,20.5,40,25); tx.stroke();
+    // ember fissure — dark split, hot core, bright point
+    tx.strokeStyle = 'rgba(20,4,2,0.9)'; tx.lineWidth = 1.6;
+    tx.beginPath(); tx.moveTo(26.5,31); tx.lineTo(24.5,37); tx.lineTo(26,40); tx.stroke();
+    tx.strokeStyle = 'rgba(255,122,40,0.9)'; tx.lineWidth = 0.7;
+    tx.beginPath(); tx.moveTo(26.5,31); tx.lineTo(24.5,37); tx.lineTo(26,40); tx.stroke();
+    tx.fillStyle = 'rgba(255,190,90,0.9)';
+    tx.fillRect(24.8,36.4,1.1,1.1);
+    tx.strokeStyle = 'rgba(255,122,40,0.6)'; tx.lineWidth = 0.6;
+    tx.beginPath(); tx.moveTo(38.5,30); tx.lineTo(40,35); tx.stroke();
   }
-  tx.fillStyle = darkCol;
+
+  // arms
+  tx.fillStyle = hideD;
   if(frame===2){
-    tx.beginPath(); tx.moveTo(22,30); tx.lineTo(4,14); tx.lineTo(9,22); tx.lineTo(2,20); tx.lineTo(12,30); tx.closePath(); tx.fill();
-    tx.beginPath(); tx.moveTo(42,30); tx.lineTo(60,14); tx.lineTo(55,22); tx.lineTo(62,20); tx.lineTo(52,30); tx.closePath(); tx.fill();
-    tx.fillStyle = clawCol;
-    for(const cx of [4,8]){ tx.beginPath(); tx.moveTo(cx,15); tx.lineTo(cx-2,10); tx.lineTo(cx+2,14); tx.closePath(); tx.fill(); }
-    for(const cx of [60,56]){ tx.beginPath(); tx.moveTo(cx,15); tx.lineTo(cx+2,10); tx.lineTo(cx-2,14); tx.closePath(); tx.fill(); }
-  } else {
-    tx.beginPath(); tx.moveTo(21,32); tx.lineTo(9,44); tx.lineTo(15,47); tx.lineTo(24,36); tx.closePath(); tx.fill();
-    tx.beginPath(); tx.moveTo(43,32); tx.lineTo(55,44); tx.lineTo(49,47); tx.lineTo(40,36); tx.closePath(); tx.fill();
-    tx.fillStyle = clawCol;
-    tx.beginPath(); tx.moveTo(9,44); tx.lineTo(5,48); tx.lineTo(11,47); tx.closePath(); tx.fill();
-    tx.beginPath(); tx.moveTo(55,44); tx.lineTo(59,48); tx.lineTo(53,47); tx.closePath(); tx.fill();
-  }
-  tx.fillStyle = hitFlash ? '#fff' : bodyGradient(tx,32,17,9,'#e0765a','#6e1c1c');
-  tx.beginPath(); tx.arc(32,17,9.5,0,TAU); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.4;
-  tx.beginPath(); tx.arc(32,17,9.5,0,TAU); tx.stroke();
-  tx.fillStyle = darkCol;
-  tx.beginPath(); tx.moveTo(23,14); tx.quadraticCurveTo(32,9,41,14); tx.lineTo(41,12); tx.quadraticCurveTo(32,7,23,12); tx.closePath(); tx.fill();
-  if(!hitFlash){
-    tx.fillStyle = '#1c0505';
-    tx.beginPath(); tx.ellipse(32,23,4.2,2.2,0,0,TAU); tx.fill();
-    tx.fillStyle = '#f4ece0';
-    tx.beginPath(); tx.moveTo(29,21.5); tx.lineTo(30,25); tx.lineTo(31,21.8); tx.closePath(); tx.fill();
-    tx.beginPath(); tx.moveTo(35,21.5); tx.lineTo(34,25); tx.lineTo(33,21.8); tx.closePath(); tx.fill();
-  }
-  for(const ex of [27,37]){
-    const eg = tx.createRadialGradient(ex,15.5,0.5,ex,15.5,3);
-    eg.addColorStop(0,'#fff8c8'); eg.addColorStop(1,'#e8c800');
-    tx.fillStyle = hitFlash ? '#a00' : eg;
-    tx.beginPath(); tx.arc(ex,15.5,2.2,0,TAU); tx.fill();
-  }
-  tx.fillStyle = darkCol;
-  tx.beginPath(); tx.moveTo(23,10); tx.lineTo(19,1); tx.lineTo(26,8); tx.closePath(); tx.fill();
-  tx.beginPath(); tx.moveTo(41,10); tx.lineTo(45,1); tx.lineTo(38,8); tx.closePath(); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 0.8;
-  tx.beginPath(); tx.moveTo(23,10); tx.lineTo(19,1); tx.lineTo(26,8); tx.closePath(); tx.stroke();
-  tx.beginPath(); tx.moveTo(41,10); tx.lineTo(45,1); tx.lineTo(38,8); tx.closePath(); tx.stroke();
-  if(!hitFlash){
-    tx.strokeStyle = darkCol; tx.lineWidth = 1;
-    for(let i=0;i<4;i++){
-      const sy = 22+i*6;
-      tx.beginPath(); tx.moveTo(32,sy); tx.lineTo(32,sy+2.5); tx.lineTo(32.8,sy+1.2); tx.closePath(); tx.fill();
+    // attack: claws thrown wide and high
+    tx.beginPath(); tx.moveTo(23,29); tx.lineTo(6,13); tx.lineTo(10.5,21); tx.lineTo(3.5,19); tx.lineTo(14,30); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(41,29); tx.lineTo(58,13); tx.lineTo(53.5,21); tx.lineTo(60.5,19); tx.lineTo(50,30); tx.closePath(); tx.fill();
+    tx.fillStyle = F ? '#fff' : bone;
+    for(let i=0;i<3;i++){
+      tx.beginPath(); tx.moveTo(5+i*2.8,15); tx.lineTo(2+i*3.4,8.5-i); tx.lineTo(7.5+i*2.8,13.5); tx.closePath(); tx.fill();
+      tx.beginPath(); tx.moveTo(59-i*2.8,15); tx.lineTo(62-i*3.4,8.5-i); tx.lineTo(56.5-i*2.8,13.5); tx.closePath(); tx.fill();
     }
-    tx.strokeStyle = 'rgba(255,140,90,0.4)'; tx.lineWidth = 1;
-    tx.beginPath(); tx.moveTo(21,45); tx.quadraticCurveTo(19,32,24,22); tx.stroke();
+  } else {
+    // idle/walk: arms low, claws hanging
+    tx.beginPath(); tx.moveTo(22,31); tx.lineTo(10,43); tx.lineTo(16,46.5); tx.lineTo(25,36); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(42,31); tx.lineTo(54,43); tx.lineTo(48,46.5); tx.lineTo(39,36); tx.closePath(); tx.fill();
+    tx.fillStyle = F ? '#fff' : bone;
+    for(let i=0;i<3;i++){
+      tx.beginPath(); tx.moveTo(11+i*2.2,44); tx.lineTo(9.5+i*2.2,49.5); tx.lineTo(13.5+i*2.2,45); tx.closePath(); tx.fill();
+      tx.beginPath(); tx.moveTo(53-i*2.2,44); tx.lineTo(54.5-i*2.2,49.5); tx.lineTo(50.5-i*2.2,45); tx.closePath(); tx.fill();
+    }
+  }
+
+  // head: horned, brow-shadowed
+  tx.fillStyle = F ? '#fff' : bodyGradient(tx,32,16.5,9,'#a85c46','#3a120c');
+  tx.beginPath(); tx.arc(32,16.5,9.2,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.2;
+  tx.beginPath(); tx.arc(32,16.5,9.2,0,TAU); tx.stroke();
+  if(!F){
+    tx.fillStyle = 'rgba(12,3,2,0.72)';        // heavy brow shadowing the eyes
+    tx.beginPath();
+    tx.moveTo(23.5,14.8); tx.quadraticCurveTo(32,10.2,40.5,14.8);
+    tx.lineTo(40.5,13); tx.quadraticCurveTo(32,8.6,23.5,13);
+    tx.closePath(); tx.fill();
+    tx.fillStyle = 'rgba(12,3,2,0.3)';         // cheek hollows
+    tx.beginPath(); tx.ellipse(26,19,2.6,3.4,0.3,0,TAU); tx.fill();
+    tx.beginPath(); tx.ellipse(38,19,2.6,3.4,-0.3,0,TAU); tx.fill();
+  }
+  for(const ex of [27.6,36.4]){                // ember eyes in the dark
+    if(!F){
+      const eg = tx.createRadialGradient(ex,15.4,0.3,ex,15.4,2.8);
+      eg.addColorStop(0,'#ffe9a8'); eg.addColorStop(0.45,'#ff9a2e'); eg.addColorStop(1,'rgba(150,40,0,0)');
+      tx.fillStyle = eg;
+    } else tx.fillStyle = '#f99';
+    tx.beginPath(); tx.arc(ex,15.4,2.3,0,TAU); tx.fill();
+  }
+  if(!F){                                      // snarl: split lip + fangs
+    tx.fillStyle = '#120303';
+    tx.beginPath(); tx.ellipse(32,22.5,4.6,2.4,0,0,TAU); tx.fill();
+    tx.fillStyle = bone;
+    tx.beginPath(); tx.moveTo(28.4,21.4); tx.lineTo(29.4,25); tx.lineTo(30.6,21.7); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(35.6,21.4); tx.lineTo(34.6,25); tx.lineTo(33.4,21.7); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(31.4,23.6); tx.lineTo(32,25.4); tx.lineTo(32.6,23.6); tx.closePath(); tx.fill();
+  }
+  // horns: swept back, ridged bone
+  for(const s of [-1,1]){
+    const hx = 32 + s*7.5;
+    tx.fillStyle = F ? '#fff' : bodyGradient(tx,hx,8,6,'#d8cec2','#5a5048');
+    tx.beginPath();
+    tx.moveTo(hx,11);
+    tx.quadraticCurveTo(32 + s*13, 6, 32 + s*15.5, 1.5);
+    tx.quadraticCurveTo(32 + s*11, 5.5, hx - s*1.5, 8.5);
+    tx.closePath(); tx.fill();
+    tx.strokeStyle = outline; tx.lineWidth = 0.7;
+    tx.stroke();
+    if(!F){
+      tx.strokeStyle = 'rgba(60,50,44,0.55)'; tx.lineWidth = 0.6;
+      tx.beginPath(); tx.moveTo(32+s*9.5,8.8); tx.lineTo(32+s*12.5,6.2); tx.stroke();
+      tx.beginPath(); tx.moveTo(32+s*8.3,10.3); tx.lineTo(32+s*10.5,8.4); tx.stroke();
+    }
+  }
+  if(!F){                                      // spine studs + ember rim light
+    tx.fillStyle = boneD;
+    for(let i=0;i<4;i++){
+      const sy = 23.5+i*5.6;
+      tx.beginPath(); tx.moveTo(31.3,sy); tx.lineTo(32,sy-2.6); tx.lineTo(32.7,sy); tx.closePath(); tx.fill();
+    }
+    tx.strokeStyle = 'rgba(255,140,70,0.35)'; tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(20.5,45); tx.quadraticCurveTo(18.5,32,23.5,22.5); tx.stroke();
   }
 }
 
 function drawKallie(tx, frame, hitFlash){
+  // Hellhound — charred hide split by ember fissures, bone spines, skull face
+  // with exposed fangs, iron spike collar. Facing right.
   tx.clearRect(0,0,64,64);
-  const bob = frame===1 ? 2.4 : 0;
-  const furFill = hitFlash ? '#fff' : bodyGradient(tx,32,38,20,'#5a4838','#1c1410');
-  const darkCol = hitFlash ? '#eee' : '#140d0a';
-  const outline = hitFlash ? '#fff' : '#0a0605';
-  const fangCol = '#f4ece0';
-  const spikeCol = hitFlash ? '#ddd' : '#2c2c2c';
+  const F = hitFlash;
+  const bob = frame===1 ? 2.2 : 0;
+  const hide  = F ? '#ffffff' : bodyGradient(tx,30,36,20,'#4a3e34','#0e0a08');
+  const hideD = F ? '#d8d8d8' : '#0a0706';
+  const bone  = F ? '#ffffff' : '#c4b8a8';
+  const outline = F ? '#ffffff' : '#050302';
+
   if(frame!==3){
-    tx.fillStyle = 'rgba(0,0,0,0.45)';
-    tx.beginPath(); tx.ellipse(32,60,24,4,0,0,TAU); tx.fill();
+    tx.fillStyle = 'rgba(0,0,0,0.5)';
+    tx.beginPath(); tx.ellipse(32,60,25,4,0,0,TAU); tx.fill();
   }
-  if(frame===3){
-    tx.fillStyle = darkCol;
-    tx.beginPath(); tx.ellipse(32,52,26,10,0,0,TAU); tx.fill();
-    tx.fillStyle = furFill;
-    tx.beginPath(); tx.ellipse(30,46,20,8,0,0,TAU); tx.fill();
-    tx.strokeStyle = outline; tx.lineWidth = 1.6;
-    tx.beginPath(); tx.ellipse(30,46,20,8,0,0,TAU); tx.stroke();
-    tx.strokeStyle='rgba(0,0,0,0.4)'; tx.lineWidth=1;
-    tx.beginPath(); tx.moveTo(18,44); tx.lineTo(44,48); tx.stroke();
+
+  if(frame===3){ // slain beast — embers guttering out of the splits
+    tx.fillStyle = 'rgba(20,3,2,0.9)';
+    tx.beginPath(); tx.ellipse(31,53,27,9,0,0,TAU); tx.fill();
+    tx.fillStyle = hideD;
+    tx.beginPath(); tx.ellipse(30,47,24,9,0,0,TAU); tx.fill();
+    tx.fillStyle = F ? '#fff' : hide;
+    tx.beginPath(); tx.ellipse(28,44,19,7.5,0,0,TAU); tx.fill();
+    if(!F){
+      tx.fillStyle = bone;                     // skull tipped out of the heap
+      tx.beginPath(); tx.arc(48,42,7.5,0,TAU); tx.fill();
+      tx.fillStyle = '#0c0908';
+      tx.beginPath(); tx.arc(45.5,40.5,2,0,TAU); tx.fill();
+      tx.fillStyle = bone;                     // jaw slack, fangs out
+      tx.beginPath(); tx.moveTo(52,45); tx.lineTo(60,47); tx.lineTo(52,49); tx.closePath(); tx.fill();
+      tx.fillStyle = 'rgba(255,110,30,0.75)';
+      tx.fillRect(18,48,3.5,1.3);
+      tx.fillStyle = 'rgba(255,110,30,0.4)';
+      tx.fillRect(30,50,2.6,1.1);
+      tx.fillStyle = 'rgba(255,110,30,0.25)';
+      tx.fillRect(40,47,2.2,1);
+      tx.strokeStyle = 'rgba(110,100,95,0.4)'; tx.lineWidth = 1.2;
+      tx.beginPath(); tx.moveTo(20,44); tx.quadraticCurveTo(17,38,20,33); tx.stroke();
+      tx.beginPath(); tx.moveTo(34,45); tx.quadraticCurveTo(38,39,36,34); tx.stroke();
+    }
     return;
   }
-  tx.strokeStyle = darkCol; tx.lineWidth = 5; tx.lineCap='round';
-  tx.beginPath(); tx.moveTo(10,42); tx.quadraticCurveTo(2+bob,50,4-bob,58); tx.stroke();
-  tx.fillStyle = darkCol;
-  tx.fillRect(14,48+bob,7,12-bob);
-  tx.fillRect(24,50-bob,7,10+bob);
-  tx.fillRect(38,50+bob,7,10-bob);
-  tx.fillRect(48,48-bob,7,12+bob);
-  tx.fillStyle = '#0a0605';
-  tx.fillRect(13,58+bob*0.5,9,3); tx.fillRect(47,58-bob*0.5,9,3);
-  tx.fillStyle = furFill;
-  tx.beginPath();
-  tx.moveTo(12,44); tx.quadraticCurveTo(20,28,34,28); tx.quadraticCurveTo(50,28,56,40);
-  tx.quadraticCurveTo(58,48,52,50); tx.lineTo(14,50); tx.closePath(); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.8;
-  tx.beginPath();
-  tx.moveTo(12,44); tx.quadraticCurveTo(20,28,34,28); tx.quadraticCurveTo(50,28,56,40);
-  tx.quadraticCurveTo(58,48,52,50); tx.lineTo(14,50); tx.closePath(); tx.stroke();
-  if(!hitFlash){
-    tx.fillStyle = darkCol;
-    for(let i=0;i<5;i++){
-      const bx = 20+i*7, by = 29-Math.sin(i*1.1)*2;
-      tx.beginPath(); tx.moveTo(bx,by); tx.lineTo(bx+3,by-6); tx.lineTo(bx+6,by); tx.closePath(); tx.fill();
+
+  // tail: thick whip dragged low
+  tx.strokeStyle = hideD; tx.lineWidth = 4.6; tx.lineCap = 'round';
+  tx.beginPath(); tx.moveTo(12,42); tx.quadraticCurveTo(3+bob,50, 4.5-bob,57); tx.stroke();
+
+  // legs (hind pair + front pair, digitigrade)
+  tx.fillStyle = hideD;
+  tx.fillRect(13,47+bob,7,12-bob);
+  tx.fillRect(23,49-bob,6.5,10+bob);
+  tx.fillRect(38,49+bob,6.5,10-bob);
+  tx.fillRect(47,47-bob,7,12+bob);
+  // paws + claws
+  const paw = (px,py,w)=>{
+    tx.fillStyle = '#080605';
+    tx.fillRect(px,py,w,3.6);
+    tx.fillStyle = F ? '#fff' : bone;
+    for(let i=0;i<3;i++){
+      const cxp = px + 1 + i*(w-4)/2;
+      tx.beginPath();
+      tx.moveTo(cxp, py+3.4); tx.lineTo(cxp+1, py+6); tx.lineTo(cxp+2, py+3.2);
+      tx.closePath(); tx.fill();
     }
-    tx.strokeStyle = 'rgba(0,0,0,0.3)'; tx.lineWidth=1;
-    for(let i=0;i<3;i++){ tx.beginPath(); tx.moveTo(30+i*6,32); tx.lineTo(28+i*6,46); tx.stroke(); }
+  };
+  paw(12, 56+bob*0.5, 9);
+  paw(45, 56-bob*0.5, 10);
+
+  // body: deep chest, tucked waist, powerful shoulder
+  tx.fillStyle = hide;
+  tx.beginPath();
+  tx.moveTo(11,45);
+  tx.quadraticCurveTo(17,27,33,27);
+  tx.quadraticCurveTo(49,27,55,38);
+  tx.quadraticCurveTo(58,47,52,50);
+  tx.lineTo(14,50);
+  tx.closePath(); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.6; tx.lineJoin = 'round';
+  tx.stroke();
+  if(!F){
+    tx.strokeStyle = 'rgba(5,3,2,0.45)'; tx.lineWidth = 1;   // ribcage striations
+    for(let i=0;i<3;i++){
+      tx.beginPath(); tx.moveTo(30+i*5.5,31.5); tx.lineTo(27+i*5.5,46); tx.stroke();
+    }
+    tx.strokeStyle = 'rgba(5,3,2,0.35)';                     // haunch mass
+    tx.beginPath(); tx.ellipse(19,38,7,9,-0.5,0,TAU); tx.stroke();
+    // main ember fissure across the ribs
+    tx.strokeStyle = 'rgba(18,4,2,0.9)'; tx.lineWidth = 1.7;
+    tx.beginPath(); tx.moveTo(38,31); tx.lineTo(36,37); tx.lineTo(38.5,41); tx.lineTo(36.5,45); tx.stroke();
+    tx.strokeStyle = 'rgba(255,120,40,0.95)'; tx.lineWidth = 0.7;
+    tx.beginPath(); tx.moveTo(38,31); tx.lineTo(36,37); tx.lineTo(38.5,41); tx.lineTo(36.5,45); tx.stroke();
+    tx.fillStyle = 'rgba(255,190,90,0.9)';
+    tx.fillRect(36.6,36.2,1.2,1.2);
+    tx.strokeStyle = 'rgba(255,120,40,0.55)'; tx.lineWidth = 0.6;
+    tx.beginPath(); tx.moveTo(46,32); tx.lineTo(48,37); tx.stroke();
+    tx.beginPath(); tx.moveTo(17,32); tx.lineTo(15,38); tx.stroke();
+    tx.strokeStyle = 'rgba(255,140,70,0.3)'; tx.lineWidth = 1.2;  // spine backlight
+    tx.beginPath(); tx.moveTo(13,43); tx.quadraticCurveTo(20,28.5,33,28); tx.stroke();
   }
-  tx.strokeStyle = '#1a1a1a'; tx.lineWidth = 5;
-  tx.beginPath(); tx.arc(48,36,9,-0.3,2.6); tx.stroke();
-  tx.fillStyle = spikeCol;
-  for(const a of [-0.2,0.5,1.2,1.9]){
-    const px = 48+Math.cos(a)*9, py = 36+Math.sin(a)*9;
-    tx.beginPath(); tx.moveTo(px,py); tx.lineTo(px+Math.cos(a)*6,py+Math.sin(a)*6); tx.lineTo(px+Math.cos(a+0.5)*3,py+Math.sin(a+0.5)*3); tx.closePath(); tx.fill();
+
+  // bone spines along the back
+  if(!F){
+    tx.fillStyle = bone;
+    for(let i=0;i<6;i++){
+      const bx = 19+i*5.6, by = 28.6-Math.sin(i/5*Math.PI)*2.2;
+      tx.beginPath(); tx.moveTo(bx,by+1.5); tx.lineTo(bx+2.4,by-3.6); tx.lineTo(bx+4.8,by+1.5); tx.closePath(); tx.fill();
+    }
   }
-  tx.fillStyle = furFill;
-  tx.beginPath(); tx.arc(52,32,10,0,TAU); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth = 1.6; tx.beginPath(); tx.arc(52,32,10,0,TAU); tx.stroke();
-  tx.fillStyle = furFill;
-  tx.beginPath(); tx.moveTo(60,30); tx.lineTo(72,32+ (frame===2?4:0)); tx.lineTo(60,38); tx.closePath(); tx.fill();
-  tx.strokeStyle = outline; tx.lineWidth=1.4;
-  tx.beginPath(); tx.moveTo(60,30); tx.lineTo(72,32+ (frame===2?4:0)); tx.lineTo(60,38); tx.closePath(); tx.stroke();
-  if(!hitFlash){
-    tx.fillStyle = '#1c0505';
-    tx.beginPath(); tx.moveTo(63,32); tx.lineTo(70,33+(frame===2?3:0)); tx.lineTo(63,36); tx.closePath(); tx.fill();
-    tx.fillStyle = fangCol;
-    tx.beginPath(); tx.moveTo(64,32.5); tx.lineTo(65,36); tx.lineTo(66,32.8); tx.closePath(); tx.fill();
-    tx.beginPath(); tx.moveTo(64,35); tx.lineTo(65,38.5); tx.lineTo(66,35.3); tx.closePath(); tx.fill();
+
+  // iron collar
+  tx.strokeStyle = '#15161a'; tx.lineWidth = 5;
+  tx.beginPath(); tx.arc(47,35.5,8.6,-0.5,2.5); tx.stroke();
+  if(!F){
+    tx.strokeStyle = 'rgba(200,205,215,0.22)'; tx.lineWidth = 1.2;
+    tx.beginPath(); tx.arc(47,35.5,9.6,0.1,2.2); tx.stroke();
+    tx.fillStyle = '#3a3d44';
+    for(const a of [-0.2,0.55,1.3,2.0]){
+      const px = 47+Math.cos(a)*8.6, py = 35.5+Math.sin(a)*8.6;
+      tx.beginPath(); tx.moveTo(px,py);
+      tx.lineTo(px+Math.cos(a)*5.5, py+Math.sin(a)*5.5);
+      tx.lineTo(px+Math.cos(a+0.55)*2.6, py+Math.sin(a+0.55)*2.6);
+      tx.closePath(); tx.fill();
+    }
   }
-  tx.fillStyle = darkCol;
-  tx.beginPath(); tx.moveTo(45,24); tx.lineTo(42,14); tx.lineTo(49,22); tx.closePath(); tx.fill();
-  tx.beginPath(); tx.moveTo(56,24); tx.lineTo(59,14); tx.lineTo(53,22); tx.closePath(); tx.fill();
-  for(const ex of [48,55]){
-    const eg = tx.createRadialGradient(ex,29,0.4,ex,29,3);
-    eg.addColorStop(0,'#fff2b0'); eg.addColorStop(1,'#c81c1c');
-    tx.fillStyle = hitFlash ? '#a00' : eg;
-    tx.beginPath(); tx.arc(ex,29,2.4,0,TAU); tx.fill();
+
+  // head: skull emerging from charred hide
+  tx.fillStyle = F ? '#fff' : bodyGradient(tx,51,31,10,'#d4c8b8','#6a5f52');
+  tx.beginPath(); tx.arc(51,31,9.6,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.3;
+  tx.beginPath(); tx.arc(51,31,9.6,0,TAU); tx.stroke();
+  if(!F){
+    // snout: skinless, bone-white, dips on the bite
+    tx.fillStyle = bone;
+    tx.beginPath();
+    tx.moveTo(56,26.5); tx.lineTo(66,30+(frame===2?4:0)); tx.lineTo(56,37); tx.closePath(); tx.fill();
+    tx.strokeStyle = outline; tx.lineWidth = 1;
+    tx.stroke();
+    tx.fillStyle = '#2a2118';                 // nostril
+    tx.beginPath(); tx.arc(63,29.5+(frame===2?3:0),1.1,0,TAU); tx.fill();
+    // jaw gap + fangs
+    tx.fillStyle = '#0c0403';
+    if(frame===2){
+      tx.beginPath(); tx.moveTo(57,30); tx.lineTo(66,36); tx.lineTo(57,37.5); tx.closePath(); tx.fill();
+    } else {
+      tx.beginPath(); tx.moveTo(58,31.5); tx.lineTo(65,33); tx.lineTo(58,36); tx.closePath(); tx.fill();
+    }
+    tx.fillStyle = bone;
+    tx.beginPath(); tx.moveTo(58.5,28.5); tx.lineTo(59.5,32.5); tx.lineTo(61,28.8); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(62,29.5); tx.lineTo(63,33.5); tx.lineTo(64.5,29.8); tx.closePath(); tx.fill();
+    if(frame===2){
+      tx.beginPath(); tx.moveTo(59,37.2); tx.lineTo(60,33.8); tx.lineTo(61,37); tx.closePath(); tx.fill();
+      tx.beginPath(); tx.moveTo(63,36.6); tx.lineTo(64,33.4); tx.lineTo(65,36.4); tx.closePath(); tx.fill();
+    }
+    // eye sockets — ember pits in bone
+    for(const ex of [47.5,53.5]){
+      const eg = tx.createRadialGradient(ex,28.5,0.3,ex,28.5,2.6);
+      eg.addColorStop(0,'#ffe9a0'); eg.addColorStop(0.5,'#ff7a1e'); eg.addColorStop(1,'rgba(140,30,0,0)');
+      tx.fillStyle = eg;
+      tx.beginPath(); tx.arc(ex,28.5,2.4,0,TAU); tx.fill();
+      tx.strokeStyle = 'rgba(20,8,4,0.6)'; tx.lineWidth = 0.8;
+      tx.beginPath(); tx.arc(ex,28.5,2.9,0,TAU); tx.stroke();
+    }
+    tx.fillStyle = 'rgba(60,45,35,0.5)';      // cheek shading
+    tx.beginPath(); tx.ellipse(46,33,2.4,3.2,0.4,0,TAU); tx.fill();
+  }
+  // ears: charred shreds
+  tx.fillStyle = hideD;
+  tx.beginPath(); tx.moveTo(45,23.5); tx.lineTo(42.5,14); tx.lineTo(49,21.5); tx.closePath(); tx.fill();
+  tx.beginPath(); tx.moveTo(55,23.5); tx.lineTo(58,14); tx.lineTo(51.5,21.5); tx.closePath(); tx.fill();
+  if(!F){                                      // ember light licking the chest
+    tx.fillStyle = 'rgba(255,110,30,0.12)';
+    tx.beginPath(); tx.ellipse(40,48,14,4,0,0,TAU); tx.fill();
   }
 }
 
@@ -993,7 +1231,6 @@ function toggleMute(){
   if(actx && masterOut) masterOut.gain.setTargetAtTime(muted?0:1, actx.currentTime, 0.02);
 }
 
-/* positional gain/pan for a world position; null = too far, skip the sound */
 function spatialize(x, y){
   if(x === undefined) return { pan:0, gain:1 };
   const p = state.player;
@@ -1291,14 +1528,12 @@ function stopMusic(fade){
 /* ========================================================================
    COMBAT, AI, PICKUPS, PROJECTILES, PARTICLES
    ======================================================================== */
-// ghost timing: corpse holds, then fades upward over GHOST_FADE seconds
 const GHOST_HOLD = 0.9, GHOST_FADE = 3.0, GHOST_RISE = 0.55, GHOST_COL = [185, 205, 240];
 
 function banner(text, color, dur){
   const d = dur || 2.4;
   const item = { text, color: color||'#e6dcd4', timer: d, max: d };
   if(state.banner && state.banner.timer > 0){
-    // queue behind the current banner instead of clobbering it
     if(state.bannerQueue.length < 3) state.bannerQueue.push(item);
   } else {
     state.banner = item;
@@ -1433,7 +1668,6 @@ function updateEnemies(dt){
   const p = state.player;
   for(const e of state.enemies){
     if(!e.alive){
-      // corpse holds, then becomes a rising fading ghost, then stops rendering
       if(!e.ghostDone){
         e.deathT += dt;
         if(e.deathT > GHOST_HOLD + GHOST_FADE) e.ghostDone = true;
@@ -1492,7 +1726,7 @@ function updateEnemies(dt){
     else if(moved){ e.animTimer += dt; e.animFrame = (e.animTimer % 0.44 < 0.22) ? 1 : 0; }
     else e.animFrame = 0;
   }
-  // separation — melee attackers shouldn't stack into one column
+  // separation
   for(let i=0;i<state.enemies.length;i++){
     const a = state.enemies[i]; if(!a.alive) continue;
     for(let j=i+1;j<state.enemies.length;j++){
@@ -1515,7 +1749,7 @@ function updateProjectiles(dt){
     pr.life -= dt;
     if(pr.life <= 0){ state.projectiles.splice(i,1); continue; }
     const nx = pr.x + pr.vx*dt, ny = pr.y + pr.vy*dt;
-    const mx = (pr.x+nx)*0.5, my = (pr.y+ny)*0.5;   // midpoint sample: no tunneling on lag spikes
+    const mx = (pr.x+nx)*0.5, my = (pr.y+ny)*0.5;
     if(isWallAt(nx, ny) || isWallAt(mx, my)){
       spawnParticles(mx, my, pr.z, 8, [255,170,60], 2.2, 0.3);
       state.projectiles.splice(i,1); continue;
@@ -1630,7 +1864,6 @@ function renderScene(){
       fbData[q+2] = td[o+2]*sh;
       fbData[q+3] = 255;
     }
-    // floor (below wall bottom, below horizon)
     for(let y=Math.max(wallBottomArr[x], horizon+1); y<H; y++){
       const rowD = (H/2)/(y - horizon);
       const fx = p.x + rowD*rx, fy = p.y + rowD*ry;
@@ -1643,7 +1876,6 @@ function renderScene(){
       fbData[q+2] = fd[o+2]*s;
       fbData[q+3] = 255;
     }
-    // ceiling (above wall top, above horizon)
     const ceilEnd = Math.min(wallTopArr[x], horizon);
     for(let y=0;y<ceilEnd;y++){
       const rowD = (H/2)/(horizon - y);
@@ -1702,14 +1934,14 @@ function castSprites(horizon){
     let ghostA = 1, ghostRise = 0, ghostTint = 0;
     if(s.kind==='e'){
       const e = o;
-      if(!e.alive && e.ghostDone) continue;         // ghost fully faded — don't render
+      if(!e.alive && e.ghostDone) continue;
       img = e.frames[e.flashTimer>0 ? 4 : e.animFrame].data;
       worldH = e.worldH;
       if(!e.alive && e.deathT > GHOST_HOLD){
         const k = clamp((e.deathT - GHOST_HOLD)/GHOST_FADE, 0, 1);
-        ghostA = 1 - k;                             // transparency 0→1 as it fades
-        ghostRise = GHOST_RISE * k;                 // slow upward drift
-        ghostTint = 0.8 * k;                        // drift toward pale spectral blue
+        ghostA = 1 - k;
+        ghostRise = GHOST_RISE * k;
+        ghostTint = 0.8 * k;
       }
       if(e.alive && e.hp < e.maxHp && ty < 14){
         state.enemyBillboards.push({ sx:screenX, top:0, w:scale*worldH, ratio:e.hp/e.maxHp, boss:e.boss, ty });
@@ -1751,7 +1983,6 @@ function castSprites(horizon){
           fbData[q+1] = img[o2+1]*sh;
           fbData[q+2] = img[o2+2]*sh;
         } else {
-          // ghost pass: tint toward spectral blue, blend with what's behind
           const ia = 1 - ghostA;
           let r = img[o2]*sh,   g = img[o2+1]*sh, b = img[o2+2]*sh;
           r += (GHOST_COL[0]-r)*ghostTint;
@@ -1847,7 +2078,6 @@ function renderHUD(){
   hctx.clearRect(0,0,w,h);
   const mono = "'Share Tech Mono', monospace";
 
-  // damage vignette
   if(state.hurtFlash > 0){
     const g = hctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.75);
     g.addColorStop(0, 'rgba(160,0,0,0)');
@@ -1865,7 +2095,6 @@ function renderHUD(){
     hctx.fillStyle = 'rgba(232,194,92,'+(0.10*state.pickupFlash/0.3)+')';
     hctx.fillRect(0,0,w,h);
   }
-  // permanent mood vignette
   const vg = hctx.createRadialGradient(w/2, h/2, h*0.45, w/2, h/2, h*0.95);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
   vg.addColorStop(1, 'rgba(0,0,0,0.4)');
@@ -1873,7 +2102,6 @@ function renderHUD(){
 
   drawWeapon();
 
-  // crosshair + hit marker
   const cx = w/2, cy = h/2;
   hctx.strokeStyle = 'rgba(230,220,212,0.85)'; hctx.lineWidth = 2;
   hctx.beginPath();
@@ -1895,7 +2123,6 @@ function renderHUD(){
     hctx.stroke();
   }
 
-  // pointer-capture hint
   if(!isTouch && !state.pointerLocked && !state.paused){
     hctx.font = '12px ' + mono;
     hctx.textAlign = 'center';
@@ -1903,7 +2130,6 @@ function renderHUD(){
     hctx.fillText('CLICK TO CAPTURE MOUSE', w/2, h*0.62);
   }
 
-  // top-left: sector + hostiles
   hctx.textAlign = 'left';
   hctx.font = '13px ' + mono;
   const trName = MUSIC_TRACKS[Math.min(state.levelIndex,2)].name;
@@ -1918,7 +2144,6 @@ function renderHUD(){
     hctx.fillText('SECTOR SECURED — REACH THE EXIT', 16, 42);
   }
 
-  // top-right: score + best + mute
   hctx.textAlign = 'right';
   hctx.font = '15px ' + mono;
   hctx.fillStyle = '#e8c25c';
@@ -1928,10 +2153,10 @@ function renderHUD(){
   hctx.fillText('BEST '+String(Math.max(best, state.score)).padStart(6,'0'), w-16, 40);
   if(muted){ hctx.fillStyle = '#ff6b6b'; hctx.fillText('MUTED [M]', w-16, 56); }
 
-  // ---- minimap: centered on you, rotates with your view ----
+  // minimap — centered on you, rotates with your view
   const mmR = clamp(Math.min(w,h)*0.115, 46, 80);
   const mmX = w - 18 - mmR, mmY = 72 + mmR;
-  const mmS = mmR / 6.5;   // world tiles from center to rim
+  const mmS = mmR / 6.5;
   const mpl = Math.hypot(p.planeX, p.planeY) || 1;
   hctx.save();
   hctx.fillStyle = 'rgba(6,4,4,0.74)';
@@ -1939,7 +2164,6 @@ function renderHUD(){
   hctx.strokeStyle = 'rgba(216,29,29,0.6)'; hctx.lineWidth = 2;
   hctx.beginPath(); hctx.arc(mmX, mmY, mmR, 0, TAU); hctx.stroke();
   hctx.beginPath(); hctx.arc(mmX, mmY, mmR-2, 0, TAU); hctx.clip();
-  // camera-space basis: plane = screen right, dir = forward. Map up = where you look.
   hctx.translate(mmX, mmY);
   hctx.transform(mmS*(p.planeX/mpl), -mmS*p.dirX, mmS*(p.planeY/mpl), -mmS*p.dirY, 0, 0);
   hctx.translate(-p.x, -p.y);
@@ -1968,7 +2192,6 @@ function renderHUD(){
     hctx.fillRect(e.x - es/2, e.y - es/2, es, es);
   }
   hctx.restore();
-  // player arrow — always points up, because the map rotates around you
   hctx.fillStyle = '#e6dcd4';
   hctx.beginPath();
   hctx.moveTo(mmX, mmY - 7);
@@ -1978,7 +2201,6 @@ function renderHUD(){
   hctx.closePath();
   hctx.fill();
 
-  // banner (drawn after the minimap so it stays readable on top)
   if(state.banner && state.banner.timer > 0){
     const b = state.banner;
     const a = Math.min(1, b.timer/0.4, (b.max-b.timer)/0.15);
@@ -1993,7 +2215,6 @@ function renderHUD(){
     hctx.restore();
   }
 
-  // enemy health bars
   for(const bb of state.enemyBillboards){
     const hx = bb.sx/RENDER_W*w, hy = (bb.top||0)/RENDER_H*h - 10;
     const bw = clamp(bb.w/RENDER_W*w*0.55, 26, 110);
@@ -2003,7 +2224,6 @@ function renderHUD(){
     hctx.fillStyle = bb.boss ? '#e8c25c' : (bb.ratio>0.5 ? '#8fae6f' : '#d81d1d');
     hctx.fillRect(hx-bw/2, hy, bw*bb.ratio, 4);
   }
-  // boss bar
   const boss = state.enemies.find(e=>e.boss && e.alive && e.state!=='idle');
   if(boss){
     const bw = Math.min(380, w*0.5), bx = w/2-bw/2, by = 26;
@@ -2018,7 +2238,6 @@ function renderHUD(){
     hctx.strokeRect(bx-2, by-2, bw+4, 12);
   }
 
-  // bottom-left: health
   const hw = 170, hx = 16, hy = h-34;
   hctx.font = '13px ' + mono; hctx.textAlign = 'left';
   hctx.fillStyle = '#b99'; hctx.fillText('HP', hx, hy-6);
@@ -2032,7 +2251,6 @@ function renderHUD(){
   hctx.fillStyle = '#e6dcd4'; hctx.font = '14px ' + mono;
   hctx.fillText(String(Math.ceil(p.health)), hx+hw+10, hy+12);
 
-  // bottom-right: weapon + ammo + slots
   const wn = WEAPONS[currentWeapon].name;
   hctx.textAlign = 'right';
   hctx.font = '14px ' + mono;
@@ -2044,7 +2262,6 @@ function renderHUD(){
     : String(p.ammoMinigun);
   hctx.fillStyle = (currentWeapon!=='pistol' && ammoTxt==='0') ? '#d81d1d' : '#e6dcd4';
   hctx.fillText(ammoTxt, w-16, h-28);
-  // weapon slots
   const slots = [['1','pistol',true],['2','shotgun',p.hasShotgun],['3','minigun',p.hasMinigun]];
   hctx.font = '11px ' + mono;
   let sw = w-16;
@@ -2227,22 +2444,26 @@ function triggerEgg(name){
 // ---------- Main update ----------
 function update(dt){
   const p = state.player;
-  // look
+  // look — FIXED: the view now turns TOWARD the mouse. (The old transform
+  // rotated the camera opposite to the input, which mirrored mouse, arrows
+  // and touch-look; all three shared it, so all three are fixed here.)
   let rot = state.mouseDX * 0.0021;
   state.mouseDX = 0;
   if(state.keys['ArrowLeft'])  rot -= 2.4*dt;
   if(state.keys['ArrowRight']) rot += 2.4*dt;
   if(rot){
     const c = Math.cos(rot), s = Math.sin(rot);
-    const ndx = p.dirX*c - p.dirY*s, ndy = p.dirX*s + p.dirY*c;
+    const ndx = p.dirX*c + p.dirY*s;
+    const ndy = -p.dirX*s + p.dirY*c;
     p.dirX = ndx; p.dirY = ndy;
-    const npx = p.planeX*c - p.planeY*s, npy = p.planeX*s + p.planeY*c;
+    const npx = p.planeX*c + p.planeY*s;
+    const npy = -p.planeX*s + p.planeY*c;
     p.planeX = npx; p.planeY = npy;
   }
-  // move — strafe is INVERTED per request: A pushes right, D pushes left
+  // move — strafe inverted per earlier request: A pushes right, D pushes left
   let fwd = ((state.keys['KeyW']||state.keys['ArrowUp'])?1:0) - ((state.keys['KeyS']||state.keys['ArrowDown'])?1:0);
   let str = (state.keys['KeyA']?1:0) - (state.keys['KeyD']?1:0);
-  if(joy.active){ fwd += -joy.dy; str -= joy.dx; }   // touch stick inverted to match
+  if(joy.active){ fwd += -joy.dy; str -= joy.dx; }
   const l = Math.hypot(fwd, str);
   if(l > 0.01){
     fwd /= Math.max(1,l); str /= Math.max(1,l);
@@ -2257,9 +2478,7 @@ function update(dt){
     state.stepAcc += step;
     if(state.stepAcc > 0.62){ state.stepAcc = 0; sfx.step(); }
   }
-  // fire
   if(state.keys['KeyL'] || state.fireHeld || state.touchFire) tryFire();
-  // timers
   state.fireCooldown = Math.max(0, state.fireCooldown - dt);
   state.muzzleTimer = Math.max(0, state.muzzleTimer - dt);
   state.recoilTimer = Math.max(0, state.recoilTimer - dt);
@@ -2283,7 +2502,7 @@ function update(dt){
 function frame(t){
   requestAnimationFrame(frame);
   const now = t/1000;
-  const dt = Math.min(0.05, now - (state.lastTime || now));  // clamp: no teleporting after tab-switch
+  const dt = Math.min(0.05, now - (state.lastTime || now));
   state.lastTime = now;
   if(state.mode==='playing' && !state.paused){
     state.levelTimer += dt;
@@ -2304,7 +2523,7 @@ function frame(t){
 }
 
 // ---------- Boot ----------
-loadLevel(0);          // static first-person backdrop behind the menu
+loadLevel(0);
 state.mode = 'menu';
 requestAnimationFrame(frame);
 })();
