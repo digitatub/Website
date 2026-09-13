@@ -2026,6 +2026,7 @@ function stopLevelSong(){
 }
 
 function startMusic(idx){
+  return; // built-in 8-bit soundtrack disabled — the YouTube track plays instead
   const nodes = initMusicGraph(); if(!nodes) return;
   stopMusic(0.15);
   musicTrackIdx = idx; musicStep16 = 0;
