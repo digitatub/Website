@@ -88,8 +88,10 @@
     </div>
     <button class="btn" id="startBtn" data-act="start">Start Mission</button>
   </div>
+  <div id="ytPlayerHolder" style="position:absolute;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none;"><div id="ytPlayer"></div></div>
 </div>
 
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 (function(){
 "use strict";
@@ -1996,6 +1998,33 @@ function musicTick(){
     musicStep16 = (musicStep16+1)%16;
   }
 }
+// ---------- YouTube background song (starts when a difficulty is picked and the level loads) ----------
+let ytPlayer = null, ytReady = false, ytPendingPlay = false;
+window.onYouTubeIframeAPIReady = function(){
+  ytPlayer = new YT.Player('ytPlayer', {
+    height: '2', width: '2',
+    videoId: 'v19Y-5JcpO0',
+    playerVars: { autoplay: 0, controls: 0, disablekb: 1, modestbranding: 1, playsinline: 1 },
+    events: {
+      onReady: function(){
+        ytReady = true;
+        if(ytPendingPlay){ ytPendingPlay = false; playLevelSong(); }
+      }
+    }
+  });
+};
+function playLevelSong(){
+  if(!ytReady){ ytPendingPlay = true; return; }
+  try{
+    ytPlayer.seekTo(0, true);
+    ytPlayer.playVideo();
+  }catch(e){ /* API not ready yet, will retry via onReady */ }
+}
+function stopLevelSong(){
+  if(!ytReady) { ytPendingPlay = false; return; }
+  try{ ytPlayer.stopVideo(); }catch(e){}
+}
+
 function startMusic(idx){
   const nodes = initMusicGraph(); if(!nodes) return;
   stopMusic(0.15);
@@ -3156,9 +3185,11 @@ function togglePause(){
       </div>`, 'Resume', 'resume');
     releasePointer();
     if(actx) actx.suspend();
+    if(ytReady){ try{ ytPlayer.pauseVideo(); }catch(e){} }
   } else {
     hideOverlay();
     if(actx) actx.resume();
+    if(ytReady){ try{ ytPlayer.playVideo(); }catch(e){} }
     grabPointer();
   }
 }
@@ -3170,6 +3201,7 @@ function startGame(){
   state.mode = 'playing'; state.paused = false;
   hideOverlay();
   startMusic(0);
+  playLevelSong();
   banner('SECTOR 1 — CRIMSON MARCH', '#e6dcd4');
   grabPointer();
 }
@@ -3198,6 +3230,7 @@ function retryLevel(){
 }
 function toMenu(){
   stopMusic(0.5);
+  stopLevelSong();
   state.mode = 'menu'; state.paused = false;
   state.score = 0; state.player = null;
   loadLevel(0);
