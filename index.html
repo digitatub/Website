@@ -1,1 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Penny Goblin</title>
+<style>
+  :root{
+    --parchment:#f2e9d8;
+    --parchment-dark:#e3d5b6;
+    --ink:#2b2320;
+    --moss:#3f6b4a;
+    --moss-dark:#2c4d34;
+    --gold:#c9992c;
+    --gold-light:#e6c25c;
+    --danger:#a83232;
+    --sky:#7fa8c9;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    height:100%;
+    background:var(--ink);
+    font-family:'Georgia', 'Iowan Old Style', serif;
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .screen{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+  }
+  .screen.active{display:flex;}
 
+  #screen-flag{ background:#f4f4f4; }
+  .flag{
+    width:min(70vw,480px);
+    aspect-ratio:11/8;
+    background:#ffffff;
+    border:2px solid #d9d9d9;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:8% 0;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    margin-bottom:36px;
+  }
+  .flag .stripe{height:12%;background:#0038b8;}
+  .star{ align-self:center; width:34%; aspect-ratio:1; position:relative; }
+  .star svg{width:100%;height:100%;}
+  #intro-continue{
+    font-size:1.1rem;
+    padding:14px 34px;
+    background:var(--moss);
+    color:#fdf8ec;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+    box-shadow:0 4px 0 var(--moss-dark);
+    transition:transform 0.08s ease;
+  }
+  #intro-continue:active{transform:translateY(3px);box-shadow:0 1px 0 var(--moss-dark);}
+  #intro-sub{color:#555;margin-top:0;margin-bottom:28px;font-size:0.95rem;}
+
+  #screen-choice{ background:radial-gradient(ellipse at center, var(--parchment) 0%, var(--parchment-dark) 100%); }
+  .villain-portrait{ width:180px; height:180px; margin-bottom:18px; animation:pop-in 0.5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop-in{
+    0%{transform:scale(0) rotate(-10deg);opacity:0;}
+    100%{transform:scale(1) rotate(0);opacity:1;}
+  }
+  #screen-choice h1{ font-size:1.8rem; margin:0 0 6px 0; color:var(--ink); }
+  #screen-choice p.flavor{ max-width:460px; color:#5a4d3a; margin:0 0 30px 0; line-height:1.5; }
+  .choice-row{ display:flex; gap:24px; }
+  .choice-box{
+    width:220px;
+    padding:26px 18px;
+    border-radius:6px;
+    cursor:pointer;
+    border:2px solid var(--ink);
+    background:#fffaf0;
+    transition:transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow:0 6px 0 rgba(0,0,0,0.2);
+  }
+  .choice-box:hover{transform:translateY(-4px);box-shadow:0 10px 0 rgba(0,0,0,0.2);}
+  .choice-box h3{margin:8px 0 6px 0;font-size:1.2rem;}
+  .choice-box p{margin:0;font-size:0.85rem;color:#5a4d3a;}
+  .choice-box.pay{border-color:var(--gold);}
+  .choice-box.fight{border-color:var(--moss);}
+  .choice-icon{font-size:2.2rem;}
+
+  #screen-game{ background:linear-gradient(#bcd8ec 0%, #bcd8ec 60%, #7ea866 60%, #5f8a4c 100%); }
+  #game-canvas{
+    background:transparent;
+    border:3px solid var(--ink);
+    border-radius:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .hud{ width:820px; max-width:92vw; display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem; }
+  .bar-wrap{width:46%;}
+  .bar-label{display:flex;justify-content:space-between;margin-bottom:3px;color:#1c2b1c;font-weight:bold;}
+  .bar-outer{ height:16px; background:#222; border-radius:8px; overflow:hidden; border:2px solid var(--ink); }
+  .bar-inner{ height:100%; transition:width 0.25s ease; }
+  #player-bar{background:linear-gradient(90deg,#4caf50,#8bd48f);}
+  #goblin-bar{background:linear-gradient(90deg,#a83232,#d96666);}
+  #instructions{ width:820px; max-width:92vw; display:flex; justify-content:space-between; margin-top:10px; font-size:0.85rem; color:#1c2b1c; }
+  #instructions span{background:rgba(255,255,255,0.55);padding:4px 10px;border-radius:4px;}
+
+  #screen-end{ background:var(--ink); color:#fdf8ec; }
+  #end-title{font-size:2.2rem;margin-bottom:10px;}
+  #end-sub{margin-bottom:30px;color:#c9c1b0;}
+  #replay-btn{
+    font-size:1.05rem;
+    padding:12px 30px;
+    background:var(--gold);
+    color:#2b2320;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    box-shadow:0 4px 0 #93701e;
+  }
+  #replay-btn:active{transform:translateY(3px);box-shadow:none;}
+
+  #audio-hint{ position:fixed; bottom:10px; left:50%; transform:translateX(-50%); font-size:0.75rem; color:#888; z-index:5; }
+</style>
+</head>
+<body>
+
+<div id="yt-player" style="position:absolute;width:1px;height:1px;overflow:hidden;top:-9999px;"></div>
+
+<div class="screen active" id="screen-flag">
+  <div class="flag">
+    <div class="stripe"></div>
+    <div class="star">
+      <svg viewBox="0 0 100 100">
+        <polygon points="50,6 61,35 92,35 67,54 76,84 50,65 24,84 33,54 8,35 39,35"
+          fill="none" stroke="#0038b8" stroke-width="6" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stripe"></div>
+  </div>
+  <p id="intro-sub">Click to enable sound, then continue</p>
+  <button id="intro-continue">Continue</button>
+</div>
+
+<div class="screen" id="screen-choice">
+  <div class="villain-portrait" id="villain-portrait-holder"></div>
+  <h1>A Goblin Blocks Your Path!</h1>
+  <p class="flavor">He jingles a pocket full of stolen pennies and grins. "Pay the toll," he croaks, "or prove your worth."</p>
+  <div class="choice-row">
+    <div class="choice-box pay" id="choice-pay">
+      <div class="choice-icon">💰</div>
+      <h3>Pay the Toll</h3>
+      <p>Send a tip and the goblin scurries off at once.</p>
+    </div>
+    <div class="choice-box fight" id="choice-fight">
+      <div class="choice-icon">⚔️</div>
+      <h3>Stand and Fight</h3>
+      <p>Dodge his tricks and beat him fair and square.</p>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-game">
+  <div class="hud">
+    <div class="bar-wrap">
+      <div class="bar-label"><span>You</span><span id="player-hp-text">100</span></div>
+      <div class="bar-outer"><div class="bar-inner" id="player-bar" style="width:100%;"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-label"><span>Goblin</span><span id="goblin-hp-text">100</span></div>
+      <div class="bar-outer"><div class="bar-inner" id="goblin-bar" style="width:100%;"></div></div>
+    </div>
+  </div>
+  <canvas id="game-canvas" width="820" height="380"></canvas>
+  <div id="instructions">
+    <span>S = crouch under thrown pennies</span>
+    <span>A = step back from the burp</span>
+    <span id="finish-hint" style="display:none;">SPACE = finish him with the silver spoon!</span>
+  </div>
+</div>
+
+<div class="screen" id="screen-end">
+  <h1 id="end-title">Victory!</h1>
+  <p id="end-sub">The goblin flees, leaving his pennies behind.</p>
+  <button id="replay-btn">Play Again</button>
+</div>
+
+<div id="audio-hint"></div>
+
+<script>
+const screens = {
+  flag: document.getElementById('screen-flag'),
+  choice: document.getElementById('screen-choice'),
+  game: document.getElementById('screen-game'),
+  end: document.getElementById('screen-end')
+};
+function showScreen(name){
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  screens[name].classList.add('active');
+}
+
+let ytPlayer = null;
+let ytReady = false;
+function loadYouTubeAPI(){
+  const tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.body.appendChild(tag);
+}
+window.onYouTubeIframeAPIReady = function(){
+  ytPlayer = new YT.Player('yt-player', {
+    height:'1', width:'1', videoId:'MtgvoHROnj0',
+    playerVars:{ autoplay:1, controls:0, disablekb:1, loop:1, playlist:'MtgvoHROnj0' },
+    events:{
+      onReady:(e)=>{
+        ytReady = true;
+        try{ e.target.playVideo(); }catch(err){}
+      }
+    }
+  });
+};
+loadYouTubeAPI();
+function tryStartAudio(){
+  if(ytReady && ytPlayer && typeof ytPlayer.playVideo === 'function'){
+    try{ ytPlayer.playVideo(); }catch(e){}
+  }
+}
+document.addEventListener('click', tryStartAudio, {once:false});
+document.addEventListener('keydown', tryStartAudio, {once:false});
+
+function drawGoblinFace(canvas, big){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const cx = w/2, cy = h/2 + (big?10:0);
+  ctx.fillStyle = '#7fae5c';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, w*0.30, h*0.32, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx - w*0.30, cy - h*0.05);
+  ctx.lineTo(cx - w*0.46, cy - h*0.22);
+  ctx.lineTo(cx - w*0.22, cy - h*0.10);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx + w*0.30, cy - h*0.05);
+  ctx.lineTo(cx + w*0.46, cy - h*0.22);
+  ctx.lineTo(cx + w*0.22, cy - h*0.10);
+  ctx.fill();
+  ctx.fillStyle = '#5a3d2b';
+  ctx.beginPath();
+  ctx.moveTo(cx - w*0.26, cy - h*0.22);
+  ctx.quadraticCurveTo(cx + w*0.05, cy - h*0.62, cx + w*0.22, cy - h*0.55);
+  ctx.quadraticCurveTo(cx + w*0.10, cy - h*0.30, cx + w*0.26, cy - h*0.20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#fffbe6';
+  ctx.beginPath(); ctx.ellipse(cx - w*0.10, cy - h*0.02, w*0.07, h*0.08, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + w*0.12, cy - h*0.02, w*0.07, h*0.08, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#26210f';
+  ctx.beginPath(); ctx.ellipse(cx - w*0.08, cy - h*0.01, w*0.03, h*0.04, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + w*0.14, cy - h*0.01, w*0.03, h*0.04, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#5f8f43';
+  ctx.beginPath(); ctx.ellipse(cx + w*0.02, cy + h*0.08, w*0.05, h*0.05, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#26210f';
+  ctx.lineWidth = big ? 3 : 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy + h*0.14, w*0.14, 0.15*Math.PI, 0.85*Math.PI);
+  ctx.stroke();
+}
+const portraitCanvas = document.createElement('canvas');
+portraitCanvas.width = 180; portraitCanvas.height = 180;
+document.getElementById('villain-portrait-holder').appendChild(portraitCanvas);
+
+document.getElementById('intro-continue').addEventListener('click', ()=>{
+  tryStartAudio();
+  showScreen('choice');
+  drawGoblinFace(portraitCanvas, true);
+});
+
+document.getElementById('choice-pay').addEventListener('click', ()=>{
+  window.open('https://www.paypal.com/paypalme/stevenlarrosa', '_blank');
+  endGame(true, "Victory!", "The toll is paid and the goblin scurries off with a bow.");
+});
+document.getElementById('choice-fight').addEventListener('click', ()=>{
+  showScreen('game');
+  startFight();
+});
+
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const GROUND_Y = 300;
+const PLAYER_X = 190;
+const GOBLIN_X = 620;
+
+let state;
+
+function freshState(){
+  return {
+    playerHP: 100,
+    goblinHP: 100,
+    attackPhase: 'idle',
+    attackType: null,
+    phaseTimer: 0,
+    coin: null,
+    burp: null,
+    goblinFlashHit: 0,
+    playerFlashHit: 0,
+    goblinWeak: false,
+    finished: false,
+    lastTime: null,
+    rafId: null
+  };
+}
+
+const keyState = {a:false, s:false};
+function onKeyDown(e){
+  if(screens.game.classList.contains('active')){
+    if(e.key === 'a' || e.key === 'A') keyState.a = true;
+    if(e.key === 's' || e.key === 'S') keyState.s = true;
+    if((e.key === ' ' || e.code === 'Space') && state && state.goblinWeak && !state.finished){
+      finishGoblin();
+    }
+  }
+}
+function onKeyUp(e){
+  if(e.key === 'a' || e.key === 'A') keyState.a = false;
+  if(e.key === 's' || e.key === 'S') keyState.s = false;
+}
+document.addEventListener('keydown', onKeyDown);
+document.addEventListener('keyup', onKeyUp);
+
+function startFight(){
+  state = freshState();
+  document.getElementById('finish-hint').style.display = 'none';
+  updateBars();
+  scheduleNextAttack(1200);
+  if(state.rafId) cancelAnimationFrame(state.rafId);
+  state.lastTime = performance.now();
+  loop();
+}
+
+function scheduleNextAttack(delay){
+  state.attackPhase = 'cooldown';
+  state.phaseTimer = delay;
+}
+
+function updateBars(){
+  document.getElementById('player-bar').style.width = Math.max(0,state.playerHP) + '%';
+  document.getElementById('goblin-bar').style.width = Math.max(0,state.goblinHP) + '%';
+  document.getElementById('player-hp-text').textContent = Math.max(0,state.playerHP);
+  document.getElementById('goblin-hp-text').textContent = Math.max(0,state.goblinHP);
+}
+
+function beginTelegraph(){
+  state.attackType = Math.random() < 0.5 ? 'coin' : 'burp';
+  state.attackPhase = 'telegraph';
+  state.phaseTimer = 900;
+}
+
+function beginActive(){
+  state.attackPhase = 'active';
+  state.phaseTimer = 550;
+  if(state.attackType === 'coin'){
+    state.coin = {x: GOBLIN_X - 40, y: GROUND_Y - 90, vx: -9.5, vy: -2};
+  } else {
+    state.burp = {x: GOBLIN_X - 40, radius: 6};
+  }
+}
+
+function resolveActive(){
+  let dodged = false;
+  if(state.attackType === 'coin' && keyState.s) dodged = true;
+  if(state.attackType === 'burp' && keyState.a) dodged = true;
+
+  if(dodged){
+    state.goblinHP -= 18;
+    state.goblinFlashHit = 10;
+    if(state.goblinHP <= 0){
+      state.goblinHP = 0;
+      state.goblinWeak = true;
+      document.getElementById('finish-hint').style.display = 'inline';
+    }
+  } else {
+    state.playerHP -= 16;
+    state.playerFlashHit = 10;
+    if(state.playerHP <= 0){
+      state.playerHP = 0;
+      updateBars();
+      endGame(false, "You Were Defeated", "The goblin cackles and pockets another penny.");
+      return;
+    }
+  }
+  updateBars();
+  state.coin = null;
+  state.burp = null;
+  if(!state.goblinWeak){
+    scheduleNextAttack(1000 + Math.random()*500);
+  } else {
+    state.attackPhase = 'idle';
+  }
+}
+
+function finishGoblin(){
+  state.finished = true;
+  endGame(true, "Victory!", "A swift blow with the silver spoon, and the goblin is beaten for good.");
+}
+
+function endGame(won, title, sub){
+  if(state && state.rafId) cancelAnimationFrame(state.rafId);
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-sub').textContent = sub;
+  document.getElementById('end-title').style.color = won ? '#e6c25c' : '#d96666';
+  showScreen('end');
+}
+
+document.getElementById('replay-btn').addEventListener('click', ()=>{
+  showScreen('choice');
+});
+
+function drawBackground(){
+  ctx.fillStyle = '#bcd8ec';
+  ctx.fillRect(0,0,canvas.width, GROUND_Y);
+  ctx.fillStyle = '#6f9a56';
+  ctx.fillRect(0,GROUND_Y,canvas.width, canvas.height-GROUND_Y);
+  ctx.fillStyle = '#f7e08a';
+  ctx.beginPath(); ctx.arc(720,60,34,0,Math.PI*2); ctx.fill();
+}
+
+function drawPlayer(){
+  const crouch = keyState.s;
+  const stepBack = keyState.a;
+  const x = PLAYER_X + (stepBack ? -55 : 0);
+  const bodyH = crouch ? 55 : 95;
+  const feetY = GROUND_Y;
+  const topY = feetY - bodyH;
+
+  ctx.save();
+  if(state.playerFlashHit > 0){
+    ctx.globalAlpha = 0.55 + 0.45*Math.sin(state.playerFlashHit);
+    state.playerFlashHit -= 1;
+  }
+  ctx.fillStyle = '#3a5a8c';
+  ctx.fillRect(x-14, feetY-30, 12, 30);
+  ctx.fillRect(x+2, feetY-30, 12, 30);
+  ctx.fillStyle = '#c94f4f';
+  ctx.fillRect(x-18, topY, 36, bodyH-30);
+  ctx.fillStyle = '#c94f4f';
+  ctx.fillRect(x-26, topY+6, 8, (bodyH-30)*0.7);
+  ctx.fillRect(x+18, topY+6, 8, (bodyH-30)*0.7);
+  ctx.fillStyle = '#f0c8a0';
+  ctx.beginPath(); ctx.ellipse(x, topY-14, 16, 18, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#e8c85a';
+  ctx.beginPath();
+  ctx.ellipse(x, topY-24, 17, 12, 0, Math.PI, Math.PI*2);
+  ctx.fill();
+  ctx.fillRect(x-17, topY-24, 34, 8);
+  ctx.restore();
+}
+
+function drawGoblinBody(){
+  const x = GOBLIN_X;
+  const feetY = GROUND_Y;
+  ctx.save();
+  if(state.goblinFlashHit > 0){
+    ctx.globalAlpha = 0.55 + 0.45*Math.sin(state.goblinFlashHit);
+    state.goblinFlashHit -= 1;
+  }
+  if(state.goblinWeak){ ctx.globalAlpha *= 0.6; }
+  ctx.fillStyle = '#4c7a38';
+  ctx.fillRect(x-12, feetY-24, 10, 24);
+  ctx.fillRect(x+2, feetY-24, 10, 24);
+  ctx.fillStyle = '#6a9a4c';
+  ctx.fillRect(x-20, feetY-70, 40, 46);
+  ctx.fillRect(x-28, feetY-64, 8, 30);
+  ctx.fillRect(x+20, feetY-64, 8, 30);
+  const headCy = feetY-84;
+  ctx.fillStyle = '#7fae5c';
+  ctx.beginPath(); ctx.ellipse(x, headCy, 20, 20, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x-20, headCy-4); ctx.lineTo(x-32, headCy-16); ctx.lineTo(x-14, headCy-8); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x+20, headCy-4); ctx.lineTo(x+32, headCy-16); ctx.lineTo(x+14, headCy-8); ctx.fill();
+  ctx.fillStyle = '#5a3d2b';
+  ctx.beginPath();
+  ctx.moveTo(x-18, headCy-14);
+  ctx.quadraticCurveTo(x+4, headCy-46, x+16, headCy-40);
+  ctx.quadraticCurveTo(x+6, headCy-22, x+18, headCy-13);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#fffbe6';
+  ctx.beginPath(); ctx.ellipse(x-7, headCy-2, 5, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+8, headCy-2, 5, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#26210f';
+  ctx.beginPath(); ctx.ellipse(x-6, headCy-1, 2, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+9, headCy-1, 2, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  if(state.goblinWeak){
+    ctx.save();
+    ctx.fillStyle = '#2b2320';
+    ctx.font = 'bold 14px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('weakened...', x, feetY-100);
+    ctx.restore();
+  }
+}
+
+function drawTelegraph(){
+  if(state.attackPhase !== 'telegraph') return;
+  ctx.save();
+  ctx.fillStyle = '#2b2320';
+  ctx.font = 'bold 16px Georgia';
+  ctx.textAlign = 'center';
+  if(state.attackType === 'coin'){
+    ctx.fillText('The goblin winds up a penny...', GOBLIN_X-100, GROUND_Y-140);
+  } else {
+    ctx.fillText('The goblin puffs up his cheeks...', GOBLIN_X-100, GROUND_Y-140);
+  }
+  ctx.restore();
+}
+
+function drawCoin(){
+  if(!state.coin) return;
+  const c = state.coin;
+  c.x += c.vx;
+  ctx.fillStyle = '#c9992c';
+  ctx.beginPath();
+  ctx.ellipse(c.x, c.y, 10, 10, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#7a5a12';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawBurp(){
+  if(!state.burp) return;
+  const b = state.burp;
+  b.radius += 4;
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = '#8fbf6a';
+  ctx.beginPath();
+  ctx.ellipse(b.x - b.radius*0.5, GROUND_Y-70, b.radius, b.radius*0.6, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function loop(){
+  const now = performance.now();
+  const dt = now - state.lastTime;
+  state.lastTime = now;
+
+  if(state.attackPhase === 'cooldown'){
+    state.phaseTimer -= dt;
+    if(state.phaseTimer <= 0) beginTelegraph();
+  } else if(state.attackPhase === 'telegraph'){
+    state.phaseTimer -= dt;
+    if(state.phaseTimer <= 0) beginActive();
+  } else if(state.attackPhase === 'active'){
+    state.phaseTimer -= dt;
+    if(state.phaseTimer <= 0) resolveActive();
+  }
+
+  drawBackground();
+  drawTelegraph();
+  drawGoblinBody();
+  drawPlayer();
+  drawCoin();
+  drawBurp();
+
+  state.rafId = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
