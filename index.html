@@ -4446,6 +4446,20 @@ setInterval(()=>{
     }
   }
 }, 1500);
+// Mod menus are very often installed by injecting a brand-new <script> tag
+// into the page (console paste, bookmarklet, or a browser extension like
+// Tampermonkey) rather than editing an existing function. This page never
+// legitimately adds script tags after boot, so any that appear are flagged.
+try{
+  new MutationObserver(muts=>{
+    if(_lockedDown) return;
+    for(const m of muts){
+      for(const node of m.addedNodes){
+        if(node.tagName === 'SCRIPT') { _triggerLockdown(); return; }
+      }
+    }
+  }).observe(document.documentElement, { childList:true, subtree:true });
+}catch(e){}
 
 // ---------- Boot ----------
 loadLevel(0);
@@ -4455,4 +4469,3 @@ requestAnimationFrame(frame);
 </script>
 </body>
 </html>
-
