@@ -1290,6 +1290,141 @@ function drawAriana(tx, frame, hitFlash){
   }
 }
 
+// ARIANA — DEMON PHASE. Same original character, now corrupted: small
+// horns, glowing ember eyes, dark cracked-skin veins, clawed hands (no bat
+// — she fights bare-handed now). Still recognizably her, still striking,
+// just wrong. Frame 2 is the charge pose (crouched, lunging forward).
+function drawArianaDemon(tx, frame, hitFlash){
+  tx.clearRect(0,0,64,64);
+  const F = hitFlash;
+  const bob = frame===1 ? 1.6 : 0;
+  const charge = frame===2;
+  const skin   = F ? '#ffffff' : bodyGradient(tx,30,34,16,'#d8a888','#8a5038');
+  const hair   = F ? '#ffffff' : bodyGradient(tx,34,20,16,'#ff6a2d','#7a2408');
+  const hairD  = F ? '#dcdcdc' : '#5a1a05';
+  const jacket = F ? '#ffffff' : bodyGradient(tx,30,42,18,'#2a0f18','#0c0409');
+  const jeans  = F ? '#e6e6e6' : '#1a1420';
+  const outline= F ? '#ffffff' : '#0a0402';
+  const vein   = 'rgba(180,20,20,0.55)';
+
+  if(frame===3){
+    softShadow(tx, 32, 55, 24, 6, 0.5);
+    tx.fillStyle = jacket;
+    tx.beginPath(); tx.ellipse(30,48,20,8,0.12,0,TAU); tx.fill();
+    tx.fillStyle = skin;
+    tx.beginPath(); tx.ellipse(48,45,7,6,0.2,0,TAU); tx.fill();
+    if(!F){
+      tx.fillStyle = hair;
+      tx.beginPath(); tx.ellipse(51,42,6.5,5,0.4,0,TAU); tx.fill();
+      tx.fillStyle = 'rgba(180,20,20,0.3)';
+      tx.beginPath(); tx.ellipse(30,48,20,8,0.12,0,TAU); tx.fill();
+    }
+    return;
+  }
+
+  softShadow(tx, 32, 58, 24, 6, charge ? 0.65 : 0.5);
+
+  // legs — low, coiled crouch when charging
+  const lean = charge ? 4 : 0;
+  tx.fillStyle = jeans;
+  tx.fillRect(20-lean,44+bob*0.4,9,13-bob*0.4);
+  tx.fillRect(34+lean,44-bob*0.4,9,13+bob*0.4);
+  tx.fillStyle = '#0a0608';
+  tx.fillRect(18-lean,55+bob*0.3,12,4);
+  tx.fillRect(33+lean,55-bob*0.3,12,4);
+
+  // torso — hunched forward when charging
+  tx.save();
+  if(charge){ tx.translate(4,2); tx.rotate(0.12); }
+  tx.fillStyle = jacket;
+  tx.beginPath();
+  tx.moveTo(18,30); tx.quadraticCurveTo(20,22,32,21); tx.quadraticCurveTo(45,22,47,32);
+  tx.lineTo(45,47); tx.lineTo(19,47); tx.closePath(); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.4; tx.lineJoin='round'; tx.stroke();
+  if(!F){
+    tx.strokeStyle = vein; tx.lineWidth = 0.8;
+    tx.beginPath(); tx.moveTo(24,26); tx.quadraticCurveTo(22,34,25,44); tx.stroke();
+    tx.beginPath(); tx.moveTo(40,27); tx.quadraticCurveTo(42,35,39,45); tx.stroke();
+  }
+  tx.restore();
+
+  // clawed arms reaching forward — no bat this time
+  const armAng = charge ? -0.25 : -0.5;
+  for(const side of [-1,1]){
+    tx.save();
+    tx.translate(32+side*15, 30);
+    tx.rotate(side*armAng*(charge?1.6:1));
+    tx.fillStyle = jacket;
+    tx.fillRect(-3.2,0,6.4,charge?18:13);
+    tx.restore();
+    const hx = 32+side*(charge?24:17), hy = charge?18:38;
+    tx.fillStyle = skin;
+    tx.beginPath(); tx.arc(hx,hy,3.2,0,TAU); tx.fill();
+    if(!F){
+      tx.strokeStyle = '#1a1a1a'; tx.lineWidth = 1;
+      for(let c2=-1;c2<=1;c2++){
+        tx.beginPath(); tx.moveTo(hx+c2*1.6, hy+1); tx.lineTo(hx+c2*2.4, hy+5.5); tx.stroke();
+      }
+    }
+  }
+
+  // neck + head
+  tx.fillStyle = skin;
+  tx.fillRect(28,17,7,6);
+  tx.fillStyle = F ? '#fff' : bodyGradient(tx,31,13,8,'#dcb090','#96604a');
+  tx.beginPath(); tx.arc(31,13,8,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1; tx.stroke();
+
+  // small horns
+  if(!F){
+    tx.fillStyle = '#3a2418';
+    tx.beginPath(); tx.moveTo(25,7); tx.lineTo(23,1.5); tx.lineTo(27,6.5); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(37,7); tx.lineTo(39,1.5); tx.lineTo(35,6.5); tx.closePath(); tx.fill();
+  }
+
+  // hair — same bright ginger, wilder now
+  tx.fillStyle = hair;
+  tx.beginPath();
+  tx.moveTo(23,10); tx.quadraticCurveTo(24,4,32,4); tx.quadraticCurveTo(41,5,40,13);
+  tx.quadraticCurveTo(44,21,38,27); tx.lineTo(35,25); tx.quadraticCurveTo(38,16,34,11);
+  tx.quadraticCurveTo(30,9,26,13); tx.quadraticCurveTo(23,18,24,25); tx.lineTo(21,26);
+  tx.quadraticCurveTo(19,16,23,10); tx.closePath(); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 0.9; tx.stroke();
+
+  if(!F){
+    // pretty bone structure, but ember-glow eyes and a fanged snarl
+    tx.fillStyle = '#1c0604';
+    tx.beginPath(); tx.ellipse(28,13,2.1,1.5,0,0,TAU); tx.fill();
+    tx.beginPath(); tx.ellipse(34.5,13,2.1,1.5,0,0,TAU); tx.fill();
+    const eg1 = tx.createRadialGradient(28,13,0.2,28,13,2);
+    eg1.addColorStop(0,'#fff2c8'); eg1.addColorStop(0.5,'#ff7a1e'); eg1.addColorStop(1,'rgba(140,20,0,0)');
+    tx.fillStyle = eg1; tx.beginPath(); tx.arc(28,13,1.8,0,TAU); tx.fill();
+    const eg2 = tx.createRadialGradient(34.5,13,0.2,34.5,13,2);
+    eg2.addColorStop(0,'#fff2c8'); eg2.addColorStop(0.5,'#ff7a1e'); eg2.addColorStop(1,'rgba(140,20,0,0)');
+    tx.fillStyle = eg2; tx.beginPath(); tx.arc(34.5,13,1.8,0,TAU); tx.fill();
+    tx.strokeStyle = hairD; tx.lineWidth = 0.8;
+    tx.beginPath(); tx.moveTo(26,10.6); tx.quadraticCurveTo(28,9.6,30,10.6); tx.stroke();
+    tx.beginPath(); tx.moveTo(33,10.6); tx.quadraticCurveTo(35,9.6,37,10.6); tx.stroke();
+    // snarling mouth with a hint of fang
+    tx.strokeStyle = '#3a0d08'; tx.lineWidth = 0.9;
+    tx.beginPath(); tx.moveTo(28.5,16.6); tx.quadraticCurveTo(31.5,charge?18.4:17.4,34.5,16.6); tx.stroke();
+    if(charge){
+      tx.fillStyle = '#fff';
+      tx.beginPath(); tx.moveTo(29.5,17); tx.lineTo(30.2,19); tx.lineTo(30.8,17); tx.closePath(); tx.fill();
+      tx.beginPath(); tx.moveTo(33.2,17); tx.lineTo(33.8,19); tx.lineTo(34.5,17); tx.closePath(); tx.fill();
+    }
+    // faint dark veins across the cheek — corrupted but still her
+    tx.strokeStyle = vein; tx.lineWidth = 0.6;
+    tx.beginPath(); tx.moveTo(24.5,14); tx.lineTo(23,17.5); tx.stroke();
+    tx.beginPath(); tx.moveTo(38,14); tx.lineTo(39.5,17.5); tx.stroke();
+  }
+  if(charge){
+    // motion streaks selling the lunge
+    tx.strokeStyle = 'rgba(255,120,60,0.4)'; tx.lineWidth = 2;
+    for(let i=0;i<3;i++){ tx.beginPath(); tx.moveTo(2,40+i*5); tx.lineTo(16,40+i*5); tx.stroke(); }
+  }
+}
+
 function buildEnemyFrames(drawFn){
   const frames = [];
   for(let f=0; f<4; f++){
@@ -1309,6 +1444,7 @@ const impFrames = buildEnemyFrames(drawImp);
 const spitterFrames = buildEnemyFrames(drawSpitter);
 const kallieFrames = buildEnemyFrames(drawKallie);
 const arianaFrames = buildEnemyFrames(drawAriana);
+const arianaDemonFrames = buildEnemyFrames(drawArianaDemon);
 
 function spriteFromDraw(drawFn){
   const c = newSpriteCanvas(); const tx = c.getContext('2d');
@@ -1438,7 +1574,31 @@ const purseSprite = spriteFromDraw(tx=>{
   tx.fillText('COACH', 32, 39);
 });
 
+// Ariana's baseball bat, left behind on the ground after her first fall —
+// pick it up and something answers.
+const batSprite = spriteFromDraw(tx=>{
+  tx.clearRect(0,0,64,64);
+  const glow = tx.createRadialGradient(32,38,2,32,38,22);
+  glow.addColorStop(0,'rgba(255,90,60,0.32)'); glow.addColorStop(1,'rgba(255,90,60,0)');
+  tx.fillStyle = glow; tx.beginPath(); tx.arc(32,38,22,0,TAU); tx.fill();
+  tx.save(); tx.translate(32,38); tx.rotate(-0.65);
+  const batGrad = tx.createLinearGradient(-20,0,20,0);
+  batGrad.addColorStop(0,'#5a3a1c'); batGrad.addColorStop(0.5,'#c68a44'); batGrad.addColorStop(1,'#e8c98a');
+  tx.fillStyle = batGrad;
+  tx.beginPath();
+  tx.moveTo(-20,-2.2); tx.lineTo(-20,2.2); tx.lineTo(16,3.2); tx.lineTo(20,0); tx.lineTo(16,-3.2);
+  tx.closePath(); tx.fill();
+  tx.strokeStyle = '#2c1a0c'; tx.lineWidth = 1; tx.stroke();
+  tx.strokeStyle = 'rgba(0,0,0,0.25)'; tx.lineWidth = 0.7;
+  tx.beginPath(); tx.moveTo(-4,-2.6); tx.lineTo(-4,2.6); tx.stroke();
+  tx.beginPath(); tx.moveTo(4,-2.9); tx.lineTo(4,2.9); tx.stroke();
+  tx.fillStyle = '#2a1c10'; tx.fillRect(-20,-2.2,4,4.4);
+  tx.restore();
+});
+
 // ---- swirling tornado, animated via a handful of pre-baked rotation frames ----
+// Redesigned for visibility: an opaque dust-grey funnel with a pale glowing
+// rim so it reads clearly as a target against the dark corridors.
 const TORNADO_FRAMES_N = 8;
 const tornadoFrames = [];
 (function(){
@@ -1447,29 +1607,59 @@ const tornadoFrames = [];
     tx.scale(SPRITE_SCALE, SPRITE_SCALE);
     tx.clearRect(0,0,64,64);
     const rot = (i/TORNADO_FRAMES_N)*TAU;
-    for(let ring=0; ring<6; ring++){
-      const t = ring/5; // 0 top (narrow) .. 1 bottom (wide)
-      const cy = 8 + t*48;
-      const rad = 4 + t*17;
-      const wob = Math.sin(rot*2 + ring*1.3)*2.4*(0.4+t);
-      const g = tx.createRadialGradient(32+wob, cy, 1, 32+wob, cy, rad);
-      const a = 0.14 + 0.10*(1-t);
-      g.addColorStop(0, 'rgba(200,190,175,'+(a+0.12)+')');
-      g.addColorStop(0.6, 'rgba(140,125,110,'+a+')');
-      g.addColorStop(1, 'rgba(90,80,70,0)');
+    // outer glow halo so it pops against dark backgrounds
+    const halo = tx.createRadialGradient(32,34,4,32,34,30);
+    halo.addColorStop(0,'rgba(210,225,240,0.28)');
+    halo.addColorStop(1,'rgba(210,225,240,0)');
+    tx.fillStyle = halo; tx.beginPath(); tx.arc(32,34,30,0,TAU); tx.fill();
+    // main funnel body — layered, opaque, narrow top / wide base
+    for(let ring=0; ring<9; ring++){
+      const t = ring/8; // 0 top (narrow) .. 1 bottom (wide)
+      const cy = 4 + t*56;
+      const rad = 3.5 + t*20;
+      const wob = Math.sin(rot*2.2 + ring*1.1)*3.2*(0.35+t);
+      const g = tx.createRadialGradient(32+wob, cy, 0.5, 32+wob, cy, rad);
+      const a = 0.55 + 0.32*(1-t);
+      g.addColorStop(0,   'rgba(232,236,240,'+Math.min(1,a+0.25)+')');
+      g.addColorStop(0.45,'rgba(178,182,190,'+a+')');
+      g.addColorStop(0.8, 'rgba(96,92,88,'+(a*0.9)+')');
+      g.addColorStop(1,   'rgba(60,54,48,0)');
       tx.fillStyle = g;
-      tx.beginPath(); tx.ellipse(32+wob, cy, rad, rad*0.42, 0, 0, TAU); tx.fill();
+      tx.beginPath(); tx.ellipse(32+wob, cy, rad, rad*0.46, 0, 0, TAU); tx.fill();
     }
-    // debris specks caught in the swirl
-    for(let d=0; d<10; d++){
-      const a = rot*1.6 + d*0.62;
-      const t = (d%5)/5;
-      const rad = 3 + t*15;
-      const cy = 10 + t*44;
-      const px = 32 + Math.cos(a)*rad, py = cy + Math.sin(a)*rad*0.35;
-      tx.fillStyle = 'rgba(60,50,40,0.55)';
-      tx.fillRect(px, py, 1.6, 1.6);
+    // bright spinning highlight streaks — sell the rotation, add contrast
+    tx.strokeStyle = 'rgba(255,255,255,0.55)'; tx.lineWidth = 1.4;
+    for(let s=0;s<3;s++){
+      const a0 = rot*2 + s*(TAU/3);
+      tx.beginPath();
+      for(let t=0; t<=1; t+=0.08){
+        const cy = 6 + t*54, rad = 4 + t*19;
+        const ang = a0 + t*7;
+        const px = 32 + Math.cos(ang)*rad*0.55, py = cy + Math.sin(ang)*rad*0.18;
+        if(t===0) tx.moveTo(px,py); else tx.lineTo(px,py);
+      }
+      tx.stroke();
     }
+    // dark outline pass so the silhouette reads against light floors too
+    tx.strokeStyle = 'rgba(20,18,16,0.4)'; tx.lineWidth = 1.6;
+    tx.beginPath();
+    tx.moveTo(32,4);
+    for(let t=0; t<=1; t+=0.1){ const cy=4+t*56, rad=3.5+t*20; tx.lineTo(32+rad, cy); }
+    for(let t=1; t>=0; t-=0.1){ const cy=4+t*56, rad=3.5+t*20; tx.lineTo(32-rad, cy); }
+    tx.closePath(); tx.stroke();
+    // dense debris caught in the swirl — bright specks for visibility
+    for(let d=0; d<16; d++){
+      const a = rot*1.7 + d*0.51;
+      const t = (d%6)/6;
+      const rad = 3 + t*18;
+      const cy = 6 + t*52;
+      const px = 32 + Math.cos(a)*rad, py = cy + Math.sin(a)*rad*0.4;
+      tx.fillStyle = d%3===0 ? 'rgba(255,255,255,0.75)' : 'rgba(70,60,50,0.7)';
+      tx.fillRect(px, py, 1.8, 1.8);
+    }
+    // ground-contact dust ring so its footprint is obvious underfoot
+    tx.fillStyle = 'rgba(180,175,165,0.35)';
+    tx.beginPath(); tx.ellipse(32,60,21,6,0,0,TAU); tx.fill();
     tornadoFrames.push(tx.getImageData(0,0,SPRITE_SIZE,SPRITE_SIZE));
   }
 })();
@@ -1690,7 +1880,9 @@ function spawnEnemy(type, x, y){
     ? { hp: 70, speed: 1.15, dmg: 12, range: 9.5, attackRange: 7.5, meleeRange: 0.85, cooldown: 1.7, frames: spitterFrames, ranged:true, worldH: 1.15, radius: 0.30 }
     : type==='kallie'
     ? { hp: 420, speed: 2.0, dmg: 22, range: 11, attackRange: 0, meleeRange: 1.1, cooldown: 0.7, frames: kallieFrames, ranged:false, worldH: 1.5, radius: 0.5, boss:true }
-    : { hp: 840, speed: 1.9, dmg: 6, range: 13, attackRange: 0, meleeRange: 0, cooldown: 0.7, frames: arianaFrames, ranged:false, worldH: 1.55, radius: 0.42, boss:true };
+    : type==='ariana'
+    ? { hp: 1680, speed: 1.9, dmg: 6, range: 13, attackRange: 0, meleeRange: 0, cooldown: 0.7, frames: arianaFrames, ranged:false, worldH: 1.55, radius: 0.42, boss:true }
+    : { hp: 5040, speed: 2.6, dmg: 26, range: 15, attackRange: 0, meleeRange: 1.0, cooldown: 0.7, frames: arianaDemonFrames, ranged:false, worldH: 1.6, radius: 0.44, boss:true };
   const d = DIFF_SCALE[Math.min(state.levelIndex, DIFF_SCALE.length-1)];
   const df = DIFFS[state.diffIdx];
   const hp = Math.round(cfg.hp * (cfg.boss ? d.bossHp*df.bossHp : d.hp*df.hp));
@@ -2246,6 +2438,7 @@ function stopLevelSong(){
   try{ ytPlayer.stopVideo(); }catch(e){}
 }
 function switchLevelSong(videoId){
+  if(ytCurrentId === videoId) return; // already on this track — don't restart it
   ytCurrentId = videoId;
   if(!ytReady){ return; }
   try{
@@ -2286,6 +2479,10 @@ const ARIANA_WINDUP = 0.85;      // bat wind-up before the tornado forms
 const ARIANA_TORNADO_DURATION = 5;   // seconds the tornado hunts the player
 const ARIANA_COOLDOWN = 10;          // seconds she's vulnerable after the tornado ends
 const ARIANA_TORNADO_HP = 46;        // shoot it down before this runs out
+const ARIANA_DEMON_AWAKEN = 1.1;     // rebirth animation after the bat is picked up
+const ARIANA_DEMON_WINDUP = 0.5;     // telegraph before she charges
+const ARIANA_DEMON_CHARGE = 0.6;     // duration of the charge dash
+const ARIANA_DEMON_RECOVER = 0.9;    // brief opening after a charge before she resets
 
 function banner(text, color, dur){
   const d = dur || 2.4;
@@ -2383,9 +2580,14 @@ function damageEnemy(e, dmg){
       state.pickups.push({ type:'minigun', x:e.x, y:e.y, alive:true });
     } else if(e.type==='ariana'){
       banner('ARIANA THE DESTROYER OF WORLDS HAS FALLEN', '#e8c25c', 3.4);
+      state.pickups.push({ type:'bat', x:e.x, y:e.y, alive:true });
+      if(state.tornado && state.tornado.ownerRef===e){ state.tornado = null; }
+      e.ghostPersist = true; // her ghost lingers over the bat rather than fading
+      // encounter isn't over yet — the bat still needs to be picked up
+    } else if(e.type==='ariana_demon'){
+      banner('ARIANA IS FINALLY SILENCED', '#e8c25c', 3.4);
       state.pickups.push({ type:'minigun', x:e.x, y:e.y, alive:true });
       state.pickups.push({ type:'health', x:e.x+0.3, y:e.y+0.3, amount:60, alive:true });
-      if(state.tornado && state.tornado.ownerRef===e){ state.tornado = null; }
       state.arianaPending = false;
     }
     if(!state.enemies.some(en=>en.alive)){
@@ -2433,6 +2635,23 @@ function summonAriana(pk){
   sfx.rumble();
   state.damageShake = 0.6;
   spawnParticles(pk.x, pk.y, 0.1, 20, [232,194,92], 3.0, 1.1);
+}
+
+// -------- Ariana's corrupted rebirth — triple her previous HP, no more
+// tornado, she just charges the player down and tries to tear them apart --------
+function summonArianaDemon(pk){
+  spawnEnemy('ariana_demon', pk.x, pk.y);
+  const a = state.enemies[state.enemies.length-1];
+  a.state = 'awaken';
+  a.awakenT = ARIANA_DEMON_AWAKEN;
+  a.invulnerable = true;
+  a.seekPause = 0.4;
+  a.chargeT = 0; a.windupT = 0; a.recoverT = 0; a.hitThisCharge = false;
+  banner('SOMETHING ANSWERS THE BAT', '#ff2a2a', 3.2);
+  sfx.rumble();
+  sfx.bossRoar(pk.x, pk.y);
+  state.damageShake = 0.7;
+  spawnParticles(pk.x, pk.y, 0.3, 26, [180,20,20], 3.4, 1.2);
 }
 
 // -------- Dry-fire hardening: a dry weapon can NEVER fire --------
@@ -2540,12 +2759,16 @@ function updateEnemies(dt){
     if(!e.alive){
       if(!e.ghostDone){
         e.deathT += dt;
-        if(e.deathT > GHOST_HOLD + GHOST_FADE) e.ghostDone = true;
+        if(!e.ghostPersist && e.deathT > GHOST_HOLD + GHOST_FADE) e.ghostDone = true;
       }
       continue;
     }
     if(e.type==='ariana'){
       updateArianaAI(e, dt, p);
+      continue;
+    }
+    if(e.type==='ariana_demon'){
+      updateArianaDemonAI(e, dt, p);
       continue;
     }
     if(e.state==='emerging'){
@@ -2791,6 +3014,90 @@ function updateTornado(dt){
   if(tor.life <= 0) endTornado(false);
 }
 
+// -------- ARIANA — DEMON PHASE: no more tornado, she just closes distance
+// and charges the player down. States: awaken -> seek -> windup (telegraph)
+// -> charging (fast dash, hurts on contact) -> recover -> back to seek. --------
+function updateArianaDemonAI(e, dt, p){
+  e.flashTimer = Math.max(0, e.flashTimer - dt);
+  if(e.state==='awaken'){
+    e.awakenT -= dt;
+    if(rng() < dt*34 && state.particles.length < 360){
+      spawnParticles(e.x, e.y, 1.0, 1, [200,20,20], 1.6, 0.4);
+    }
+    if(e.awakenT <= 0){
+      e.state = 'seek';
+      e.invulnerable = false;
+      e.seekPause = 0.3;
+      banner('ARIANA HAS RETURNED — DEMONIFIED', '#ff2a2a', 2.4);
+      sfx.bossRoar(e.x, e.y);
+      state.damageShake = 0.5;
+    }
+    return;
+  }
+  const dx = p.x-e.x, dy = p.y-e.y, d = Math.hypot(dx,dy) || 0.001;
+  const los = hasLineOfSight(e.x, e.y, p.x, p.y);
+  e.weaveT -= dt;
+  if(e.weaveT <= 0){ e.weaveDir = rng()<0.5 ? -1 : 1; e.weaveT = 0.5 + rng()*0.7; }
+
+  if(e.state==='seek'){
+    e.seekPause = Math.max(0, e.seekPause - dt);
+    let moved = false;
+    if(d > 1.4){
+      const wx = -dy/d*e.weaveDir*0.3, wy = dx/d*e.weaveDir*0.3;
+      moveWithCollision(e, (dx/d+wx)*e.speed*dt, (dy/d+wy)*e.speed*dt);
+      moved = true;
+    }
+    if(moved){ e.animTimer += dt; e.animFrame = (e.animTimer % 0.36 < 0.18) ? 1 : 0; } else e.animFrame = 0;
+    if(e.seekPause<=0 && los && d < e.sightRange && d > 1.3){
+      e.state = 'windup';
+      e.windupT = ARIANA_DEMON_WINDUP;
+      sfx.growl(e.x, e.y);
+    }
+    return;
+  }
+
+  if(e.state==='windup'){
+    e.windupT -= dt;
+    e.animFrame = 0;
+    if(e.windupT <= 0){
+      const ang = Math.atan2(dy,dx);
+      e.chargeDirX = Math.cos(ang); e.chargeDirY = Math.sin(ang);
+      e.state = 'charging';
+      e.chargeT = ARIANA_DEMON_CHARGE;
+      e.hitThisCharge = false;
+      e.animFrame = 2;
+      sfx.bossRoar(e.x, e.y);
+      spawnParticles(e.x, e.y, 0.5, 10, [200,30,20], 2.6, 0.5);
+    }
+    return;
+  }
+
+  if(e.state==='charging'){
+    e.chargeT -= dt;
+    e.animFrame = 2;
+    const spd = e.speed * 2.6;
+    moveWithCollision(e, e.chargeDirX*spd*dt, e.chargeDirY*spd*dt);
+    if(!e.hitThisCharge && d < e.meleeRange + 0.3){
+      e.hitThisCharge = true;
+      damagePlayer(e.dmg);
+      state.damageShake = Math.max(state.damageShake, 0.5);
+      spawnParticles(p.x, p.y, 0.5, 10, [150,15,15], 2.4, 0.4);
+    }
+    if(e.chargeT <= 0){
+      e.state = 'recover';
+      e.recoverT = ARIANA_DEMON_RECOVER;
+    }
+    return;
+  }
+
+  if(e.state==='recover'){
+    e.recoverT -= dt;
+    e.animFrame = 0;
+    if(e.recoverT <= 0){ e.state = 'seek'; e.seekPause = 0.2; }
+    return;
+  }
+}
+
 function updateProjectiles(dt){
   const p = state.player;
   for(let i=state.projectiles.length-1;i>=0;i--){
@@ -2851,6 +3158,11 @@ function updatePickups(){
     if(pk.type==='purse'){
       pk.alive = false;
       summonAriana(pk);
+      continue;
+    }
+    if(pk.type==='bat'){
+      pk.alive = false;
+      summonArianaDemon(pk);
       continue;
     }
     if(pk.type==='health'){
@@ -3078,8 +3390,8 @@ function castSprites(horizon, flick){
         state.enemyBillboards.push({ sx:screenX, top:0, w:scale*worldH, ratio:e.hp/e.maxHp, boss:e.boss, ty });
       }
     } else if(s.kind==='p'){
-      img = (o.type==='health'?healthSprite : o.type==='ammo'?ammoSprite : o.type==='shotgun'?shotgunSprite : o.type==='bone'?boneSprite : o.type==='purse'?purseSprite : minigunSprite).data;
-      worldH = o.type==='bone' ? 0.6 : o.type==='purse' ? 0.5 : 0.55;
+      img = (o.type==='health'?healthSprite : o.type==='ammo'?ammoSprite : o.type==='shotgun'?shotgunSprite : o.type==='bone'?boneSprite : o.type==='purse'?purseSprite : o.type==='bat'?batSprite : minigunSprite).data;
+      worldH = o.type==='bone' ? 0.6 : o.type==='purse' ? 0.5 : o.type==='bat' ? 0.5 : 0.55;
       li = (1/(1 + ty*0.10 + ty*ty*0.016))*flick;
     } else if(s.kind==='hm'){
       const hm = o;
@@ -3093,10 +3405,10 @@ function castSprites(horizon, flick){
     } else if(s.kind==='to'){
       const tf = Math.floor(now/85) % TORNADO_FRAMES_N;
       img = tornadoFrames[tf].data;
-      worldH = 2.1;
-      zc = 0.55;
-      li = 1.1;
-      emissive = false;
+      worldH = 2.6;
+      zc = 0.62;
+      li = 1.35;
+      emissive = true;
     } else {
       img = o.acid ? acidSprite.data : fireballSprite.data;
       worldH = o.worldH * (1 + 0.09*Math.sin(now/68 + o.x*13.7));
@@ -3106,10 +3418,14 @@ function castSprites(horizon, flick){
     }
     let ghostA = 1, ghostRise = 0, ghostTint = 0;
     if(s.kind==='e' && !o.alive && o.deathT > GHOST_HOLD){
-      const k = clamp((o.deathT - GHOST_HOLD)/GHOST_FADE, 0, 1);
-      ghostA = 1 - k;
-      ghostRise = GHOST_RISE * k;
-      ghostTint = 0.8 * k;
+      if(o.ghostPersist){
+        ghostA = 1; ghostRise = GHOST_RISE; ghostTint = 0.8;
+      } else {
+        const k = clamp((o.deathT - GHOST_HOLD)/GHOST_FADE, 0, 1);
+        ghostA = 1 - k;
+        ghostRise = GHOST_RISE * k;
+        ghostTint = 0.8 * k;
+      }
     } else if(s.kind==='hm'){
       ghostA = clamp((o.life/o.maxLife)*1.8, 0, 1);
     }
