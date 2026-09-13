@@ -1918,7 +1918,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='Digit2' && state.player && state.player.hasShotgun && currentWeapon!=='shotgun'){ lastWeapon=currentWeapon; currentWeapon='shotgun'; if(state.mode==='playing') sfx.weaponSwitch(); }
   if(e.code==='Digit3' && state.player && state.player.hasMinigun && currentWeapon!=='minigun'){ lastWeapon=currentWeapon; currentWeapon='minigun'; if(state.mode==='playing') sfx.weaponSwitch(); }
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyL'].includes(e.code)) e.preventDefault();
-  trackEasterEgg(e.code);
+  trackEasterEgg(e.code, e.repeat);
 });
 window.addEventListener('keyup', e=>{ state.keys[e.code] = false; });
 
@@ -1938,6 +1938,7 @@ document.addEventListener('contextmenu', e=>{ e.preventDefault(); });
 let devWarningShown = false, devSilenced = false, devSilenceIdx = 0;
 const DEV_SILENCE_CODE = ['KeyN','KeyO','KeyC','KeyH','KeyE','KeyA','KeyT']; // types as "NOCHEAT"
 window.addEventListener('keydown', e=>{
+  if(e.repeat) return;
   if(e.code === DEV_SILENCE_CODE[devSilenceIdx]){
     devSilenceIdx++;
     if(devSilenceIdx === DEV_SILENCE_CODE.length){ devSilenceIdx = 0; devSilenced = true; }
@@ -4245,7 +4246,8 @@ const EASTER_EGGS = {
   heal:   { seq:['KeyH','KeyE','KeyA','KeyL'], idx:0 },
   timeskip: { seq:['KeyT','KeyI','KeyM','KeyE','KeyS','KeyK','KeyI','KeyP'], idx:0 },
 };
-function trackEasterEgg(code){
+function trackEasterEgg(code, repeat){
+  if(repeat) return; // held keys (e.g. WASD movement) shouldn't corrupt cheat progress
   for(const name in EASTER_EGGS){
     const egg = EASTER_EGGS[name];
     if(code === egg.seq[egg.idx]){
