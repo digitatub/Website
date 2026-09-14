@@ -78,7 +78,7 @@
     <div id="ovBody">
       <p>Something has broken through in the lower levels. Clear all six sectors, grab what ammo and armor you find, and reach the exit alive.</p>
       <div class="keys">
-        <div><b>WASD</b> move &nbsp; <b>MOUSE</b> look &nbsp; <b>LMB / L</b> fire</div>
+        <div><b>WASD</b> move &nbsp; <b>MOUSE</b> look &nbsp; <b>LMB / L / SPACE</b> fire</div>
         <div><b>1-3 / WHEEL</b> weapons &nbsp; <b>Q</b> quick-swap &nbsp; <b>SHIFT</b> sprint</div>
         <div><b>ESC</b> pause &nbsp; <b>M</b> mute — clear all hostiles to unlock the exit</div>
       </div>
@@ -1821,6 +1821,7 @@ function loadLevel(idx){
   state.boneTile = null; state.kalliePending = false;
   state.purseTile = null; state.arianaPending = false; state.arianaPurseSpawned = false;
   state.tornado = null;
+  _lastPX = null; _lastPY = null;
 
   let px=1.5, py=1.5;
   for(let y=0; y<state.gh; y++){
@@ -1952,7 +1953,7 @@ setInterval(()=>{
   const hDiff = window.outerHeight - window.innerHeight;
   if(wDiff > 180 || hDiff > 180){
     devWarningShown = true;
-    if(state.mode==='playing') banner('CONSOLE ACCESS DETECTED — PLAY FAIR', '#e0a860', 3.0);
+    _triggerLockdown();
   }
 }, 1500);
 
@@ -2205,6 +2206,13 @@ function duckMusic(amount, hold){
 }
 
 const sfx = {
+  jumpScare(){ const v=voice(); if(!v)return;
+    duckMusic(0.95, 2.2);
+    vNoise(v,0,0.4,1.0,'bandpass',2600,500,1.3);
+    vNoise(v,0,0.55,0.7,'lowpass',1900,180);
+    vTone(v,0,'sawtooth',1500,160,0.7,0.55,20);
+    vTone(v,0.02,'sawtooth',95,38,0.75,0.95);
+  },
   pistol(x,y){ const v=voice(x,y); if(!v)return;
     vNoise(v,0,0.09,0.55,'highpass',1400);
     vNoise(v,0,0.16,0.42,'lowpass',2400,320);
@@ -2716,6 +2724,8 @@ function tryFire(){
   if(state.fireCooldown > 0) return;
   if(currentWeapon==='shotgun') p.ammoShotgun--;
   else if(currentWeapon==='minigun') p.ammoMinigun--;
+  _shotLog.push({ t: performance.now(), delay: w.fireDelay });
+  if(_shotLog.length > 24) _shotLog.shift();
   sfx[currentWeapon]();
   state.fireCooldown = w.fireDelay;
   state.muzzleTimer = 0.06;
@@ -3234,6 +3244,9 @@ function updatePickups(){
     state.score += 10;
     state.pickupFlash = 0.3;
     sfx.pickup();
+    _markLegitGrant();
+    _pickupLog.push(performance.now());
+    if(_pickupLog.length > 30) _pickupLog.shift();
   }
 }
 
@@ -4140,7 +4153,7 @@ function togglePause(){
   if(state.paused){
     showOverlay('PAUSED', 'the pit waits', `
       <div class="keys">
-        <div><b>WASD</b> move · <b>MOUSE</b> look · <b>LMB / L</b> fire</div>
+        <div><b>WASD</b> move · <b>MOUSE</b> look · <b>LMB / L / SPACE</b> fire</div>
         <div><b>1-3 / WHEEL</b> weapons · <b>Q</b> swap · <b>SHIFT</b> sprint · <b>M</b> mute</div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
@@ -4263,6 +4276,15 @@ function trackEasterEgg(code, repeat){
 }
 function triggerEgg(name){
   const p = state.player;
+  // no one retypes a 4-8 letter word on a keyboard 3+ times inside 4
+  // seconds while also playing — that pattern means it's being invoked
+  // directly (e.g. from a paused console) rather than actually typed.
+  const now = performance.now();
+  if(!_eggLog[name]) _eggLog[name] = [];
+  _eggLog[name] = _eggLog[name].filter(t => now - t < 3000);
+  _eggLog[name].push(now);
+  if(_eggLog[name].length > 1){ _triggerLockdown(); return; }
+
   if(name==='ariana'){
     p.hasMinigun = true;
     p.ammoMinigun = Math.min(9999, p.ammoMinigun + 500);
@@ -4272,6 +4294,7 @@ function triggerEgg(name){
     sfx.pickup();
     sfx.weaponSwitch();
     switchLevelSong(YT_EGG_SONG);
+    _markLegitGrant();
   } else if(name==='heal'){
     const before = p.health;
     p.health = Math.min(p.maxHealth, p.health + 25);
@@ -4279,6 +4302,7 @@ function triggerEgg(name){
     banner(gained > 0 ? 'HEALED +'+gained+' HP' : 'ALREADY AT FULL HEALTH', '#8fae6f');
     state.pickupFlash = 0.3;
     sfx.pickup();
+    _markLegitGrant();
   } else if(name==='timeskip'){
     if(state.enemies.some(en=>en.alive && (en.type==='ariana' || en.type==='ariana_demon'))){
       banner('ARIANA IS ALREADY LOOSE', '#e0a860');
@@ -4303,6 +4327,7 @@ function update(dt){
   if(p.ammoMinigun < 0) p.ammoMinigun = 0;
   // look — standard: view turns toward the mouse / arrow key
   let rot = state.mouseDX * 0.0021;
+  _mouseInputAccum += Math.abs(state.mouseDX);
   state.mouseDX = 0;
   if(state.keys['ArrowLeft'])  rot -= 2.4*dt;
   if(state.keys['ArrowRight']) rot += 2.4*dt;
@@ -4333,7 +4358,7 @@ function update(dt){
     state.stepAcc += step;
     if(state.stepAcc > 0.62){ state.stepAcc = 0; sfx.step(); }
   }
-  if(state.keys['KeyL'] || state.fireHeld || state.touchFire) tryFire();
+  if(state.keys['KeyL'] || state.keys['Space'] || state.fireHeld || state.touchFire) tryFire();
   state.fireCooldown = Math.max(0, state.fireCooldown - dt);
   state.muzzleTimer = Math.max(0, state.muzzleTimer - dt);
   state.recoilTimer = Math.max(0, state.recoilTimer - dt);
@@ -4377,8 +4402,12 @@ let perfEMA = 16.7, perfTimer = 0;
 function frame(t){
   if(_lockedDown) return;
   requestAnimationFrame(frame);
+  _tamperCheckCounter++;
+  if(_tamperCheckCounter >= 8){ _tamperCheckCounter = 0; _tamperCheck(); }
   const now = t/1000;
-  const raw = Math.min(0.08, now - (state.lastTime || now));
+  const rawUnclamped = now - (state.lastTime || now);
+  if(_pageVisible && rawUnclamped > 2.0){ _triggerLockdown(); return; }
+  const raw = Math.min(0.08, rawUnclamped);
   const dt = Math.min(0.05, raw);
   state.lastTime = now;
   if(state.mode==='playing' && !state.paused){
@@ -4409,35 +4438,186 @@ function frame(t){
 /* ========================================================================
    LIVE-TAMPER LOCKOUT — see chat for exact scope/limits.
    Catches: someone using DevTools' Sources panel to live-edit one of the
-   watched functions (e.g. removing wall collision) while the page keeps
-   running, without reloading.
+   watched functions (e.g. removing wall collision), or getting game state
+   into a combination that's mathematically impossible through normal play
+   (god mode, speed hack, infinite ammo), while the page keeps running.
    Does NOT catch: someone editing their own downloaded copy of this file
    (that copy simply won't include this check — nothing can prevent that).
    Does NOT catch: edits made before this check first runs (e.g. via a
-   breakpoint set on load). Not real security — a tripwire, not a lock.
+   breakpoint set on load, or DevTools "Local Overrides"). Not real
+   security — a tripwire, not a lock.
    ======================================================================== */
+// Force a genuine reload if the browser restores this page from back/
+// forward cache — otherwise a stale lockdown (or a stale UN-locked state)
+// from before could get resurrected instead of a clean, current load.
+window.addEventListener('pageshow', e=>{ if(e.persisted) location.reload(); });
+
 let _lockedDown = false;
+// Distinguishes a real tab-switch (common, totally legitimate — the tab
+// goes hidden and rAF naturally stalls) from a debugger pause on a
+// breakpoint, which typically leaves the tab reporting as still visible
+// (docked DevTools doesn't count as switching away) while the JS thread
+// itself is frozen for a long stretch. Only the latter is suspicious.
+let _pageVisible = !document.hidden;
+document.addEventListener('visibilitychange', ()=>{ _pageVisible = !document.hidden; });
+let _tamperCheckCounter = 0;
+const TAMPER_CHECK_INTERVAL_S = 0.14; // matches the 8-frame throttle above
+let _shotLog = [];                                   // rapid-fire detection
+let _pickupLog = [];                                 // rapid-pickup detection
+let _eggLog = {};                                    // forced/spammed cheat-code detection
+let _legitGrantUntil = 0;                            // short grace window after a real pickup/cheat grant
+function _markLegitGrant(){ _legitGrantUntil = performance.now() + 320; }
+let _lastAmmoShotgun = null, _lastAmmoMinigun = null, _lastHealth = null;
+let _lastPX = null, _lastPY = null, _lastCheckLevelIndex = -1;
+let _mouseInputAccum = 0, _lastFacingAngle = null;
 function _tamperHash(s){
   let h = 5381;
   for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
   return h;
 }
-const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies];
+const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies, updateProjectiles, updatePickups, hasLineOfSight, acidHitPlayer, updateArianaAI, updateArianaDemonAI, updateTornado, update, triggerEgg, frame];
 const _guardBaseline = _guardedFns.map(fn => _tamperHash(fn.toString()));
+// Values that should be mathematically impossible through normal play, no
+// matter HOW they got changed (edited function, direct state poke via a
+// paused breakpoint, whatever). Checking the result instead of the method
+// closes the gap a mod menu can open by simply avoiding the watched
+// functions above.
+function _invariantsHold(){
+  const p = state.player;
+  if(!p) return true;
+  if(p.maxHealth !== 100) return false;
+  if(p.health > p.maxHealth + 0.01) return false;
+  if(p.speed > 3.05) return false;
+  if(p.radius < 0.18 || p.radius > 0.3) return false;
+  if(p.ammoShotgun > 50) return false;
+  if(p.ammoMinigun > 9999) return false;
+  return true;
+}
+// Behavioral checks — these look at what actually happened over time
+// rather than a single snapshot, so they catch cheats that keep every
+// individual value "legal-looking" (e.g. a refill loop that just holds
+// ammo at the cap) instead of pushing something past a hard limit.
+function _behaviorChecksHold(){
+  const p = state.player;
+  if(!p || state.mode!=='playing') return true;
+  const now = performance.now();
+
+  // god mode / infinite ammo: these should only ever rise right after a
+  // tracked legitimate grant (a pickup, or the HEAL/ARIANA cheat)
+  if(_lastAmmoShotgun!==null && p.ammoShotgun > _lastAmmoShotgun + 0.01 && now > _legitGrantUntil) return false;
+  if(_lastAmmoMinigun!==null && p.ammoMinigun > _lastAmmoMinigun + 0.01 && now > _legitGrantUntil) return false;
+  if(_lastHealth!==null && p.health > _lastHealth + 0.5 && now > _legitGrantUntil) return false;
+  _lastAmmoShotgun = p.ammoShotgun; _lastAmmoMinigun = p.ammoMinigun; _lastHealth = p.health;
+
+  // teleport / no-clip / wallbang: the player should never be standing
+  // inside a solid wall, and should never cover more ground between
+  // checks than max sprint speed allows
+  if(state.grid && isWallAt(p.x, p.y)) return false;
+  if(state.levelIndex === _lastCheckLevelIndex && _lastPX !== null){
+    const dist = Math.hypot(p.x-_lastPX, p.y-_lastPY);
+    const maxDist = 3.0*1.55*TAMPER_CHECK_INTERVAL_S + 0.4; // sprint speed + tighter slack
+    if(dist > maxDist) return false;
+  }
+  _lastPX = p.x; _lastPY = p.y; _lastCheckLevelIndex = state.levelIndex;
+
+  // aimbot / view-snapping: facing angle shouldn't change more than the
+  // mouse input actually received could explain
+  const ang = Math.atan2(p.dirY, p.dirX);
+  if(_lastFacingAngle !== null){
+    let dAng = Math.abs(ang - _lastFacingAngle);
+    if(dAng > Math.PI) dAng = TAU - dAng;
+    const explainable = _mouseInputAccum*0.0021 + 2.4*TAMPER_CHECK_INTERVAL_S + 0.15;
+    if(dAng > explainable) return false;
+  }
+  _lastFacingAngle = ang; _mouseInputAccum = 0;
+
+  // rapid fire: shots landing closer together than the weapon allows,
+  // recorded at the exact moment each shot fires (not just polled)
+  for(let i=1;i<_shotLog.length;i++){
+    const gap = (_shotLog[i].t - _shotLog[i-1].t)/1000;
+    if(gap < _shotLog[i].delay*0.75 - 0.01) return false;
+  }
+
+  // rapid pickup: more items collected in a short window than are
+  // physically reachable given each one requires walking within range
+  while(_pickupLog.length && now - _pickupLog[0] > 1500) _pickupLog.shift();
+  if(_pickupLog.length > 4) return false;
+
+  return true;
+}
+function _showJumpScare(){
+  try{ sfx.jumpScare(); }catch(e){}
+  document.title = 'nice try';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:999999;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+  overlay.innerHTML = `
+    <style>
+      @keyframes _jsLunge{
+        0%{ transform:scale(1.5); filter:brightness(3); }
+        12%{ transform:scale(1.18) translate(2%,-1%); filter:brightness(1.4); }
+        22%{ transform:scale(1.22) translate(-2%,1%); }
+        35%{ transform:scale(1.08); filter:brightness(1); }
+        100%{ transform:scale(1.1); }
+      }
+    </style>
+    <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice"
+         style="width:100%;height:100%;animation:_jsLunge 0.5s ease-out both;">
+      <defs>
+        <radialGradient id="_jsEye" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="#fff6d8"/>
+          <stop offset="35%" stop-color="#ff9a1e"/>
+          <stop offset="100%" stop-color="#3a0a00"/>
+        </radialGradient>
+        <radialGradient id="_jsFace" cx="50%" cy="32%" r="80%">
+          <stop offset="0%" stop-color="#4a1414"/>
+          <stop offset="55%" stop-color="#1a0505"/>
+          <stop offset="100%" stop-color="#000"/>
+        </radialGradient>
+      </defs>
+      <rect width="400" height="400" fill="#000"/>
+      <path d="M55,50 Q30,190 85,330 Q150,398 200,400 Q250,398 315,330 Q370,190 345,50 Q270,-15 200,0 Q130,-15 55,50 Z"
+            fill="url(#_jsFace)" stroke="#000" stroke-width="4"/>
+      <path d="M100,95 Q88,160 112,225" stroke="#5a1414" stroke-width="3" fill="none" opacity="0.55"/>
+      <path d="M300,95 Q312,160 288,225" stroke="#5a1414" stroke-width="3" fill="none" opacity="0.55"/>
+      <path d="M150,55 Q165,15 200,10 Q235,15 250,55" stroke="#2a0505" stroke-width="7" fill="none" opacity="0.7"/>
+      <path d="M95,115 Q140,88 185,120" stroke="#080202" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <path d="M215,120 Q260,88 305,115" stroke="#080202" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <ellipse cx="140" cy="175" rx="40" ry="48" fill="url(#_jsEye)"/>
+      <ellipse cx="260" cy="175" rx="40" ry="48" fill="url(#_jsEye)"/>
+      <ellipse cx="140" cy="175" rx="7" ry="36" fill="#0a0000"/>
+      <ellipse cx="260" cy="175" rx="7" ry="36" fill="#0a0000"/>
+      <path d="M105,275 Q200,345 295,275 Q288,308 200,326 Q112,308 105,275 Z" fill="#180303"/>
+      <path d="M118,278 L132,297 L146,278 L160,297 L174,278 L188,297 L200,278 L212,297 L226,278 L240,297 L254,278 L268,297 L282,278"
+            fill="#e9e1d2"/>
+      <path d="M123,320 L137,302 L151,320 L165,302 L179,320 L193,302 L207,320 L221,302 L235,320 L249,302 L263,320 L277,302"
+            fill="#e9e1d2"/>
+    </svg>`;
+  document.body ? document.body.appendChild(overlay) : document.documentElement.appendChild(overlay);
+  setTimeout(()=>{
+    overlay.innerHTML = '';
+    const d = document.createElement('div');
+    d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d81d1d;font:900 clamp(18px,4.6vw,42px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;letter-spacing:1.5px;text-shadow:0 0 18px rgba(216,29,29,0.7);padding:24px;';
+    d.textContent = 'CHUNKY PIE WATER MADE BY DISCORD KITTEN';
+    overlay.appendChild(d);
+  }, 1300);
+}
 function _triggerLockdown(){
   if(_lockedDown) return;
   _lockedDown = true;
   try{
-    document.title = 'Session ended';
-    document.documentElement.innerHTML = '';
-    const d = document.createElement('div');
-    d.style.cssText = 'position:fixed;inset:0;background:#000;color:#b33;display:flex;align-items:center;justify-content:center;font:16px monospace;text-align:center;padding:24px;z-index:99999;';
-    d.textContent = 'Session ended — the running code was modified.';
-    document.body ? document.body.appendChild(d) : document.documentElement.appendChild(d);
-  }catch(e){}
-  try{ setTimeout(()=>{ location.replace('about:blank'); }, 50); }catch(e){}
+    _showJumpScare();
+  }catch(e){
+    try{
+      document.title = 'nice try';
+      document.documentElement.innerHTML = '';
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;inset:0;background:#000;color:#d81d1d;display:flex;align-items:center;justify-content:center;font:900 clamp(18px,4.6vw,42px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;padding:24px;z-index:99999;letter-spacing:1.5px;text-shadow:0 0 18px rgba(216,29,29,0.7);';
+      d.textContent = 'CHUNKY PIE WATER MADE BY DISCORD KITTEN';
+      document.body ? document.body.appendChild(d) : document.documentElement.appendChild(d);
+    }catch(e2){}
+  }
 }
-setInterval(()=>{
+function _tamperCheck(){
   if(_lockedDown) return;
   for(let i=0;i<_guardedFns.length;i++){
     if(_tamperHash(_guardedFns[i].toString()) !== _guardBaseline[i]){
@@ -4445,21 +4625,9 @@ setInterval(()=>{
       return;
     }
   }
-}, 1500);
-// Mod menus are very often installed by injecting a brand-new <script> tag
-// into the page (console paste, bookmarklet, or a browser extension like
-// Tampermonkey) rather than editing an existing function. This page never
-// legitimately adds script tags after boot, so any that appear are flagged.
-try{
-  new MutationObserver(muts=>{
-    if(_lockedDown) return;
-    for(const m of muts){
-      for(const node of m.addedNodes){
-        if(node.tagName === 'SCRIPT') { _triggerLockdown(); return; }
-      }
-    }
-  }).observe(document.documentElement, { childList:true, subtree:true });
-}catch(e){}
+  if(!_invariantsHold()){ _triggerLockdown(); return; }
+  if(!_behaviorChecksHold()){ _triggerLockdown(); return; }
+}
 
 // ---------- Boot ----------
 loadLevel(0);
