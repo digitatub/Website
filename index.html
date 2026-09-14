@@ -4405,9 +4405,7 @@ function frame(t){
   _tamperCheckCounter++;
   if(_tamperCheckCounter >= 8){ _tamperCheckCounter = 0; _tamperCheck(); }
   const now = t/1000;
-  const rawUnclamped = now - (state.lastTime || now);
-  if(_pageVisible && rawUnclamped > 2.0){ _triggerLockdown(); return; }
-  const raw = Math.min(0.08, rawUnclamped);
+  const raw = Math.min(0.08, now - (state.lastTime || now));
   const dt = Math.min(0.05, raw);
   state.lastTime = now;
   if(state.mode==='playing' && !state.paused){
@@ -4453,13 +4451,6 @@ function frame(t){
 window.addEventListener('pageshow', e=>{ if(e.persisted) location.reload(); });
 
 let _lockedDown = false;
-// Distinguishes a real tab-switch (common, totally legitimate — the tab
-// goes hidden and rAF naturally stalls) from a debugger pause on a
-// breakpoint, which typically leaves the tab reporting as still visible
-// (docked DevTools doesn't count as switching away) while the JS thread
-// itself is frozen for a long stretch. Only the latter is suspicious.
-let _pageVisible = !document.hidden;
-document.addEventListener('visibilitychange', ()=>{ _pageVisible = !document.hidden; });
 let _tamperCheckCounter = 0;
 const TAMPER_CHECK_INTERVAL_S = 0.14; // matches the 8-frame throttle above
 let _shotLog = [];                                   // rapid-fire detection
@@ -4475,7 +4466,7 @@ function _tamperHash(s){
   for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
   return h;
 }
-const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies, updateProjectiles, updatePickups, hasLineOfSight, acidHitPlayer, updateArianaAI, updateArianaDemonAI, updateTornado, update, triggerEgg, frame];
+const _guardedFns = [renderScene, castSprites, isWallAt, moveWithCollision, damagePlayer, damageEnemy, tryFire, checkExit, spawnEnemy, updateEnemies, updateProjectiles, updatePickups, hasLineOfSight, acidHitPlayer, updateArianaAI, updateArianaDemonAI, updateTornado, update, triggerEgg];
 const _guardBaseline = _guardedFns.map(fn => _tamperHash(fn.toString()));
 // Values that should be mathematically impossible through normal play, no
 // matter HOW they got changed (edited function, direct state poke via a
@@ -4596,8 +4587,8 @@ function _showJumpScare(){
   setTimeout(()=>{
     overlay.innerHTML = '';
     const d = document.createElement('div');
-    d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d81d1d;font:900 clamp(18px,4.6vw,42px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;letter-spacing:1.5px;text-shadow:0 0 18px rgba(216,29,29,0.7);padding:24px;';
-    d.textContent = 'CHUNKY PIE WATER MADE BY DISCORD KITTEN';
+    d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d81d1d;font:900 clamp(28px,7vw,64px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;letter-spacing:2px;text-shadow:0 0 18px rgba(216,29,29,0.7);';
+    d.textContent = 'BYE BYE';
     overlay.appendChild(d);
   }, 1300);
 }
@@ -4611,8 +4602,8 @@ function _triggerLockdown(){
       document.title = 'nice try';
       document.documentElement.innerHTML = '';
       const d = document.createElement('div');
-      d.style.cssText = 'position:fixed;inset:0;background:#000;color:#d81d1d;display:flex;align-items:center;justify-content:center;font:900 clamp(18px,4.6vw,42px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;padding:24px;z-index:99999;letter-spacing:1.5px;text-shadow:0 0 18px rgba(216,29,29,0.7);';
-      d.textContent = 'CHUNKY PIE WATER MADE BY DISCORD KITTEN';
+      d.style.cssText = 'position:fixed;inset:0;background:#000;color:#d81d1d;display:flex;align-items:center;justify-content:center;font:900 clamp(28px,7vw,64px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;padding:24px;z-index:99999;letter-spacing:2px;text-shadow:0 0 18px rgba(216,29,29,0.7);';
+      d.textContent = 'BYE BYE';
       document.body ? document.body.appendChild(d) : document.documentElement.appendChild(d);
     }catch(e2){}
   }
