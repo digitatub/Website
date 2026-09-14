@@ -1425,6 +1425,119 @@ function drawArianaDemon(tx, frame, hitFlash){
   }
 }
 
+// THE PUNISHER — an original, big, muscular demon used only for the
+// tamper-lockdown sequence. Frames: 0 idle, 1 walk, 2 wind-up (fist
+// cocked back), 3 strike (fist thrust forward, impact).
+function drawPunisherDemon(tx, frame, hitFlash){
+  tx.clearRect(0,0,64,64);
+  const F = hitFlash;
+  const skin  = F ? '#ffffff' : bodyGradient(tx,32,34,20,'#8a1414','#240404');
+  const skinD = F ? '#dcdcdc' : '#180303';
+  const outline = F ? '#ffffff' : '#0a0202';
+  const bob = frame===1 ? 1.8 : 0;
+  const wind = frame===2, strike = frame===3;
+
+  softShadow(tx, 32, 59, 23, 6, 0.55);
+
+  // thick legs, planted wide
+  tx.fillStyle = skinD;
+  tx.fillRect(19, 44+bob*0.5, 11, 17-bob*0.5);
+  tx.fillRect(34, 44-bob*0.5, 11, 17+bob*0.5);
+  tx.fillStyle = '#080202';
+  tx.fillRect(17,59+bob*0.4,14,4);
+  tx.fillRect(33,59-bob*0.4,14,4);
+
+  // barrel torso
+  tx.fillStyle = skin;
+  tx.beginPath();
+  tx.moveTo(15,44); tx.quadraticCurveTo(13,22,32,18); tx.quadraticCurveTo(51,22,49,44);
+  tx.lineTo(47,48); tx.lineTo(17,48); tx.closePath(); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.6; tx.lineJoin='round'; tx.stroke();
+  if(!F){
+    tx.strokeStyle = 'rgba(0,0,0,0.4)'; tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(32,22); tx.lineTo(32,46); tx.stroke();
+    for(let i=0;i<3;i++){ tx.beginPath(); tx.moveTo(21,28+i*5.5); tx.lineTo(43,28+i*5.5); tx.stroke(); }
+    tx.strokeStyle = 'rgba(255,110,30,0.28)'; tx.lineWidth = 1.4;
+    tx.beginPath(); tx.moveTo(17,24); tx.quadraticCurveTo(13,35,18,44); tx.stroke();
+    tx.beginPath(); tx.moveTo(47,24); tx.quadraticCurveTo(51,35,46,44); tx.stroke();
+  }
+
+  // off-arm, relaxed
+  tx.fillStyle = skin;
+  tx.beginPath(); tx.ellipse(13,33,6.4,11.5,0.1,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1.3; tx.stroke();
+  tx.fillStyle = skinD; tx.beginPath(); tx.arc(12,45,4.6,0,TAU); tx.fill();
+
+  // punching arm — pose changes drastically per frame
+  if(wind){
+    tx.fillStyle = skin;
+    tx.beginPath(); tx.ellipse(52,26,7,12,-0.7,0,TAU); tx.fill();
+    tx.strokeStyle = outline; tx.lineWidth = 1.4; tx.stroke();
+    tx.fillStyle = skinD;
+    const fg = tx.createRadialGradient(58,15,1,58,15,6);
+    fg.addColorStop(0,'#ffb060'); fg.addColorStop(1, F?'#fff':'#180303');
+    tx.fillStyle = F ? '#fff' : fg;
+    tx.beginPath(); tx.arc(58,15,6,0,TAU); tx.fill();
+    tx.strokeStyle = outline; tx.stroke();
+  } else if(strike){
+    tx.fillStyle = skin;
+    tx.beginPath(); tx.ellipse(40,32,8,10,0.3,0,TAU); tx.fill();
+    tx.strokeStyle = outline; tx.lineWidth = 1.4; tx.stroke();
+    // huge foreshortened fist, thrust toward the viewer
+    const fg = tx.createRadialGradient(29,33,1,29,33,13);
+    fg.addColorStop(0,'#c25a3a'); fg.addColorStop(1, F?'#fff':'#2a0505');
+    tx.fillStyle = F ? '#fff' : fg;
+    tx.beginPath(); tx.arc(27,33,13,0,TAU); tx.fill();
+    tx.strokeStyle = outline; tx.lineWidth = 1.6; tx.stroke();
+    if(!F){
+      tx.strokeStyle = 'rgba(0,0,0,0.35)'; tx.lineWidth = 1;
+      for(let i=0;i<3;i++){ tx.beginPath(); tx.moveTo(20+i*6,24); tx.lineTo(20+i*6,42); tx.stroke(); }
+    }
+  } else {
+    tx.fillStyle = skin;
+    tx.beginPath(); tx.ellipse(48,32+bob*0.4,6.4,11.5,0.15,0,TAU); tx.fill();
+    tx.strokeStyle = outline; tx.lineWidth = 1.3; tx.stroke();
+    tx.fillStyle = skinD; tx.beginPath(); tx.arc(49,45-bob*0.3,4.6,0,TAU); tx.fill();
+  }
+
+  // neck + head
+  tx.fillStyle = skin;
+  tx.fillRect(27,14,10,7);
+  tx.fillStyle = F ? '#fff' : bodyGradient(tx,32,11,8.5,'#9a2a2a','#3a0808');
+  tx.beginPath(); tx.arc(32,11,8.5,0,TAU); tx.fill();
+  tx.strokeStyle = outline; tx.lineWidth = 1; tx.stroke();
+
+  // small horns
+  if(!F){
+    tx.fillStyle = '#12100e';
+    tx.beginPath(); tx.moveTo(24,6); tx.lineTo(21,0); tx.lineTo(26.5,5.5); tx.closePath(); tx.fill();
+    tx.beginPath(); tx.moveTo(40,6); tx.lineTo(43,0); tx.lineTo(37.5,5.5); tx.closePath(); tx.fill();
+  }
+
+  if(!F){
+    // glowing eyes, brighter during wind-up/strike
+    const hot = wind || strike;
+    for(const ex of [27.5,36.5]){
+      const eg = tx.createRadialGradient(ex,10,0.3,ex,10,hot?3.2:2.2);
+      eg.addColorStop(0, hot?'#fff2c8':'#ffd9a0');
+      eg.addColorStop(0.5,'#ff5a1e');
+      eg.addColorStop(1,'rgba(140,20,0,0)');
+      tx.fillStyle = eg;
+      tx.beginPath(); tx.arc(ex,10,hot?3.2:2.2,0,TAU); tx.fill();
+    }
+    // heavy brow, snarling mouth
+    tx.strokeStyle = '#1c0505'; tx.lineWidth = 1.2;
+    tx.beginPath(); tx.moveTo(25,7.5); tx.lineTo(30,8.6); tx.stroke();
+    tx.beginPath(); tx.moveTo(39,7.5); tx.lineTo(34,8.6); tx.stroke();
+    tx.strokeStyle = '#100202'; tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(27,15.4); tx.quadraticCurveTo(32,strike?17.4:16.2,37,15.4); tx.stroke();
+  }
+  if(strike){
+    tx.strokeStyle = 'rgba(255,150,60,0.5)'; tx.lineWidth = 2;
+    for(let i=0;i<3;i++){ tx.beginPath(); tx.moveTo(2,26+i*6); tx.lineTo(16,26+i*6); tx.stroke(); }
+  }
+}
+
 function buildEnemyFrames(drawFn){
   const frames = [];
   for(let f=0; f<4; f++){
@@ -1445,6 +1558,7 @@ const spitterFrames = buildEnemyFrames(drawSpitter);
 const kallieFrames = buildEnemyFrames(drawKallie);
 const arianaFrames = buildEnemyFrames(drawAriana);
 const arianaDemonFrames = buildEnemyFrames(drawArianaDemon);
+const punisherDemonFrames = buildEnemyFrames(drawPunisherDemon);
 
 function spriteFromDraw(drawFn){
   const c = newSpriteCanvas(); const tx = c.getContext('2d');
@@ -1701,6 +1815,9 @@ const hitmarkKillSprite = spriteFromDraw(tx=>{
 // ---------- Levels ----------
 // Sector 3: 'B' marks Kallie's bone — it rises from the floor only after the
 // sector is cleared. Touching it summons her up through the ground.
+// A small sealed room with no exit — used only for the tamper-lockdown
+// sequence, never reachable through normal play.
+const LOCKDOWN_ROOM = ["111111111","100000001","100000001","100000001","100000001","100000001","111111111"];
 const LEVEL1 = ["11111111111111111111111","10000001100000011000001","10P0000110020001100F001","100000011002H0011000001","10000001100000011000001","11101111111101111110111","10000000000000000000001","10000000000000000000001","11000001100000110000011","1103A300000E000004H4011","110303011000G0110404011","11000001100000110000011","11101111111011111110111","100F0000000X0000000A001","11111111111111111111111"];
 const LEVEL2 = ["111111111111111111111111111","100000011000000110000001111","100P0001100E0001100F0001111","100033000H0000G000000001111","10000001100044011A004401111","100000011000000110000001111","100000011000000110000001111","111011111110111111101111111","111011111110111111101111111","10000001100000H1100F0001111","100E0001100F0001100E0001111","100000000000000000000001111","100002011000000110000021111","1000000110000331100000A1111","100000011000000110000001111","111111111111111111110111111","111111111111111111110111111","111111111111111111110000X11","111111111111111111111111111"];
 const LEVEL3 = ["11111111111111111111111","10000011111111111111111","10P0A011111111111111111","10000011100001000000001","1110111110HG01000000X01","11101111100001000000001","1000000010S0010BF000001","1000000000EA010000S0001","10000AE0100001000000001","11111011111111000000001","100000011111110F0000001","10F00H00000000000000001","10000001111111000000001","11111111111111000000001","11111111111111111111111"];
@@ -1793,6 +1910,7 @@ const state = {
   fireHeld: false, touchFire: false, recoilTimer: 0,
   bobPhase: 0, stepAcc: 0, weaponSpin: 0,
   diffIdx: 1,   // 0 CRY ME A RIVER · 1 NORMAL · 2 GRAPE WITHOUT THE G
+  lockdownActive: false, lockdownPhase: 'none', lockdownTimer: 0, hackerDeath: false,
 };
 
 const WEAPONS = {
@@ -1821,6 +1939,7 @@ function loadLevel(idx){
   state.boneTile = null; state.kalliePending = false;
   state.purseTile = null; state.arianaPending = false; state.arianaPurseSpawned = false;
   state.tornado = null;
+  state.lockdownActive = false; state.lockdownPhase = 'none'; state.hackerDeath = false;
   _lastPX = null; _lastPY = null;
 
   let px=1.5, py=1.5;
@@ -2206,13 +2325,6 @@ function duckMusic(amount, hold){
 }
 
 const sfx = {
-  jumpScare(){ const v=voice(); if(!v)return;
-    duckMusic(0.95, 2.2);
-    vNoise(v,0,0.4,1.0,'bandpass',2600,500,1.3);
-    vNoise(v,0,0.55,0.7,'lowpass',1900,180);
-    vTone(v,0,'sawtooth',1500,160,0.7,0.55,20);
-    vTone(v,0.02,'sawtooth',95,38,0.75,0.95);
-  },
   pistol(x,y){ const v=voice(x,y); if(!v)return;
     vNoise(v,0,0.09,0.55,'highpass',1400);
     vNoise(v,0,0.16,0.42,'lowpass',2400,320);
@@ -2694,6 +2806,120 @@ function summonArianaDemon(pk){
   sfx.bossRoar(pk.x, pk.y);
   state.damageShake = 0.7;
   spawnParticles(pk.x, pk.y, 0.3, 26, [180,20,20], 3.4, 1.2);
+}
+
+// -------- TAMPER-LOCKDOWN PUNISH SEQUENCE --------
+// Seals the player in a small room with no exit, freezes their movement
+// and weapons (but not looking around), waits, then a demon rises from
+// the ground and walks over to deliver one lethal punch.
+const LOCKDOWN_DEMON_WAIT = 3.0;
+const LOCKDOWN_DEMON_SPEED = 1.3;
+const LOCKDOWN_PUNCH_WINDUP = 0.75;
+const LOCKDOWN_PUNCH_STRIKE = 0.22;
+
+function startLockdownRoom(){
+  state.grid = LOCKDOWN_ROOM.map(r=>r.split(''));
+  state.gh = LOCKDOWN_ROOM.length; state.gw = LOCKDOWN_ROOM[0].length;
+  state.enemies = []; state.pickups = []; state.projectiles = []; state.particles = [];
+  state.hitMarks.length = 0; state.hitMarker = null;
+  state.exitTile = null; state.boneTile = null; state.kalliePending = false;
+  state.purseTile = null; state.arianaPending = false; state.arianaPurseSpawned = false;
+  state.tornado = null;
+  state.banner = null; state.bannerQueue.length = 0;
+  state.mode = 'playing'; state.paused = false;
+  hideOverlay();
+  releasePointer();
+  const px = 2.5, py = 3.5;
+  if(!state.player){
+    state.player = { x:px, y:py, dirX:1, dirY:0, planeX:0, planeY:0.66,
+      health:100, maxHealth:100, ammoShotgun:8, hasShotgun:false,
+      ammoMinigun:0, hasMinigun:false, speed:3.0, radius:0.22 };
+  } else {
+    state.player.x = px; state.player.y = py;
+    state.player.dirX = 1; state.player.dirY = 0; state.player.planeX = 0; state.player.planeY = 0.66;
+    state.player.health = state.player.maxHealth || 100;
+  }
+  state.lockdownActive = true;
+  state.lockdownPhase = 'wait';
+  state.lockdownTimer = LOCKDOWN_DEMON_WAIT;
+  state.hackerDeath = false;
+}
+
+function updateLockdownSequence(dt){
+  const p = state.player;
+  if(state.lockdownPhase === 'wait'){
+    state.lockdownTimer -= dt;
+    if(state.lockdownTimer <= 0){
+      state.lockdownPhase = 'active';
+      const dx = 6.5, dy = 3.5;
+      state.enemies.push({
+        type:'punisher', x:dx, y:dy, hp:99999, maxHp:99999,
+        frames: punisherDemonFrames, worldH: 2.3, radius: 0.55,
+        state:'emerging', emergeT: KALLIE_EMERGE,
+        animFrame:0, flashTimer:0, alive:true,
+        deathT:0, ghostDone:true, boss:false,
+        punchTimer:0,
+      });
+      state.damageShake = 0.5;
+      sfx.rumble();
+      spawnParticles(dx, dy, 0.1, 26, [140,10,10], 3.2, 1.0);
+    }
+    return;
+  }
+  const d = state.enemies[0];
+  if(!d) return;
+  if(d.state === 'emerging'){
+    d.emergeT -= dt;
+    d.flashTimer = Math.max(0, d.flashTimer - dt);
+    if(rng() < dt*30 && state.particles.length < 360){
+      spawnParticles(d.x, d.y, 0.15, 1, [150,15,15], 1.6, 0.4);
+    }
+    state.damageShake = Math.max(state.damageShake, 0.14);
+    if(d.emergeT <= 0){
+      d.state = 'walk';
+      sfx.bossRoar(d.x, d.y);
+      state.damageShake = 0.4;
+    }
+    return;
+  }
+  if(d.state === 'walk'){
+    const dx = p.x-d.x, dy = p.y-d.y, dist = Math.hypot(dx,dy) || 0.001;
+    if(dist > 1.15){
+      moveWithCollision(d, dx/dist*LOCKDOWN_DEMON_SPEED*dt, dy/dist*LOCKDOWN_DEMON_SPEED*dt);
+      d.animFrame = Math.floor(performance.now()/240) % 2;
+    } else {
+      d.state = 'windup';
+      d.punchTimer = LOCKDOWN_PUNCH_WINDUP;
+      d.animFrame = 2;
+      sfx.growl(d.x, d.y);
+    }
+    return;
+  }
+  if(d.state === 'windup'){
+    d.punchTimer -= dt;
+    d.animFrame = 2;
+    const k = 1 - clamp(d.punchTimer/LOCKDOWN_PUNCH_WINDUP, 0, 1);
+    state.damageShake = Math.max(state.damageShake, 0.05 + k*0.35);
+    if(d.punchTimer <= 0){
+      d.state = 'strike';
+      d.punchTimer = LOCKDOWN_PUNCH_STRIKE;
+      d.animFrame = 3;
+      sfx.rumble();
+      state.damageShake = 1.0;
+      spawnParticles(p.x, p.y, 0.55, 26, [210,20,20], 3.6, 0.9);
+      spawnParticles(p.x, p.y, 0.55, 14, [255,180,60], 2.8, 1.1);
+    }
+    return;
+  }
+  if(d.state === 'strike'){
+    d.punchTimer -= dt;
+    d.animFrame = 3;
+    if(d.punchTimer <= 0 && !state.hackerDeath){
+      state.hackerDeath = true;
+      p.health = 0;
+      gameOver();
+    }
+  }
 }
 
 // -------- Dry-fire hardening: a dry weapon can NEVER fire --------
@@ -4246,6 +4472,12 @@ function gameOver(){
   stopMusic(0.8);
   releasePointer();
   state.mode = 'gameover';
+  if(state.hackerDeath){
+    showOverlay('BYE BYE', 'the pit does not forgive', `
+      <p>disable whatever you were running, then reload to try again.</p>`,
+      'Retry Sector', 'retry');
+    return;
+  }
   showOverlay('YOU DIED', 'the pit claims another', `
     <p>SECTOR <span class="stat">${state.levelIndex+1}</span> · KILLS <span class="stat">${state.kills}</span></p>
     <p>SCORE <span class="stat">${state.score}</span> · BEST <span class="stat">${best}</span></p>`,
@@ -4281,9 +4513,9 @@ function triggerEgg(name){
   // directly (e.g. from a paused console) rather than actually typed.
   const now = performance.now();
   if(!_eggLog[name]) _eggLog[name] = [];
-  _eggLog[name] = _eggLog[name].filter(t => now - t < 3000);
+  _eggLog[name] = _eggLog[name].filter(t => now - t < 4000);
   _eggLog[name].push(now);
-  if(_eggLog[name].length > 1){ _triggerLockdown(); return; }
+  if(_eggLog[name].length > 2){ _triggerLockdown(); return; }
 
   if(name==='ariana'){
     p.hasMinigun = true;
@@ -4340,6 +4572,7 @@ function update(dt){
     const npy = -p.planeX*s + p.planeY*c;
     p.planeX = npx; p.planeY = npy;
   }
+  if(state.lockdownActive){ updateLockdownSequence(dt); return; }
   // move — standard strafe: A goes left, D goes right
   let fwd = ((state.keys['KeyW']||state.keys['ArrowUp'])?1:0) - ((state.keys['KeyS']||state.keys['ArrowDown'])?1:0);
   let str = (state.keys['KeyD']?1:0) - (state.keys['KeyA']?1:0);
@@ -4400,10 +4633,10 @@ function update(dt){
 // ---------- Main loop + adaptive resolution governor ----------
 let perfEMA = 16.7, perfTimer = 0;
 function frame(t){
-  if(_lockedDown) return;
+  if(_domWiped) return;
   requestAnimationFrame(frame);
   _tamperCheckCounter++;
-  if(_tamperCheckCounter >= 8){ _tamperCheckCounter = 0; _tamperCheck(); }
+  if(_tamperCheckCounter >= 15){ _tamperCheckCounter = 0; _tamperCheck(); }
   const now = t/1000;
   const raw = Math.min(0.08, now - (state.lastTime || now));
   const dt = Math.min(0.05, raw);
@@ -4451,13 +4684,14 @@ function frame(t){
 window.addEventListener('pageshow', e=>{ if(e.persisted) location.reload(); });
 
 let _lockedDown = false;
+let _domWiped = false;
 let _tamperCheckCounter = 0;
-const TAMPER_CHECK_INTERVAL_S = 0.14; // matches the 8-frame throttle above
+const TAMPER_CHECK_INTERVAL_S = 0.28; // roughly matches the 15-frame throttle below
 let _shotLog = [];                                   // rapid-fire detection
 let _pickupLog = [];                                 // rapid-pickup detection
 let _eggLog = {};                                    // forced/spammed cheat-code detection
 let _legitGrantUntil = 0;                            // short grace window after a real pickup/cheat grant
-function _markLegitGrant(){ _legitGrantUntil = performance.now() + 320; }
+function _markLegitGrant(){ _legitGrantUntil = performance.now() + 500; }
 let _lastAmmoShotgun = null, _lastAmmoMinigun = null, _lastHealth = null;
 let _lastPX = null, _lastPY = null, _lastCheckLevelIndex = -1;
 let _mouseInputAccum = 0, _lastFacingAngle = null;
@@ -4506,7 +4740,7 @@ function _behaviorChecksHold(){
   if(state.grid && isWallAt(p.x, p.y)) return false;
   if(state.levelIndex === _lastCheckLevelIndex && _lastPX !== null){
     const dist = Math.hypot(p.x-_lastPX, p.y-_lastPY);
-    const maxDist = 3.0*1.55*TAMPER_CHECK_INTERVAL_S + 0.4; // sprint speed + tighter slack
+    const maxDist = 3.0*1.6*TAMPER_CHECK_INTERVAL_S + 0.7; // sprint speed + generous slack
     if(dist > maxDist) return false;
   }
   _lastPX = p.x; _lastPY = p.y; _lastCheckLevelIndex = state.levelIndex;
@@ -4517,7 +4751,7 @@ function _behaviorChecksHold(){
   if(_lastFacingAngle !== null){
     let dAng = Math.abs(ang - _lastFacingAngle);
     if(dAng > Math.PI) dAng = TAU - dAng;
-    const explainable = _mouseInputAccum*0.0021 + 2.4*TAMPER_CHECK_INTERVAL_S + 0.15;
+    const explainable = _mouseInputAccum*0.0021 + 2.4*TAMPER_CHECK_INTERVAL_S + 0.3;
     if(dAng > explainable) return false;
   }
   _lastFacingAngle = ang; _mouseInputAccum = 0;
@@ -4526,84 +4760,29 @@ function _behaviorChecksHold(){
   // recorded at the exact moment each shot fires (not just polled)
   for(let i=1;i<_shotLog.length;i++){
     const gap = (_shotLog[i].t - _shotLog[i-1].t)/1000;
-    if(gap < _shotLog[i].delay*0.75 - 0.01) return false;
+    if(gap < _shotLog[i].delay*0.5 - 0.02) return false;
   }
 
   // rapid pickup: more items collected in a short window than are
   // physically reachable given each one requires walking within range
-  while(_pickupLog.length && now - _pickupLog[0] > 1500) _pickupLog.shift();
-  if(_pickupLog.length > 4) return false;
+  while(_pickupLog.length && now - _pickupLog[0] > 2000) _pickupLog.shift();
+  if(_pickupLog.length > 6) return false;
 
   return true;
-}
-function _showJumpScare(){
-  try{ sfx.jumpScare(); }catch(e){}
-  document.title = 'nice try';
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:999999;display:flex;align-items:center;justify-content:center;overflow:hidden;';
-  overlay.innerHTML = `
-    <style>
-      @keyframes _jsLunge{
-        0%{ transform:scale(1.5); filter:brightness(3); }
-        12%{ transform:scale(1.18) translate(2%,-1%); filter:brightness(1.4); }
-        22%{ transform:scale(1.22) translate(-2%,1%); }
-        35%{ transform:scale(1.08); filter:brightness(1); }
-        100%{ transform:scale(1.1); }
-      }
-    </style>
-    <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice"
-         style="width:100%;height:100%;animation:_jsLunge 0.5s ease-out both;">
-      <defs>
-        <radialGradient id="_jsEye" cx="50%" cy="45%" r="55%">
-          <stop offset="0%" stop-color="#fff6d8"/>
-          <stop offset="35%" stop-color="#ff9a1e"/>
-          <stop offset="100%" stop-color="#3a0a00"/>
-        </radialGradient>
-        <radialGradient id="_jsFace" cx="50%" cy="32%" r="80%">
-          <stop offset="0%" stop-color="#4a1414"/>
-          <stop offset="55%" stop-color="#1a0505"/>
-          <stop offset="100%" stop-color="#000"/>
-        </radialGradient>
-      </defs>
-      <rect width="400" height="400" fill="#000"/>
-      <path d="M55,50 Q30,190 85,330 Q150,398 200,400 Q250,398 315,330 Q370,190 345,50 Q270,-15 200,0 Q130,-15 55,50 Z"
-            fill="url(#_jsFace)" stroke="#000" stroke-width="4"/>
-      <path d="M100,95 Q88,160 112,225" stroke="#5a1414" stroke-width="3" fill="none" opacity="0.55"/>
-      <path d="M300,95 Q312,160 288,225" stroke="#5a1414" stroke-width="3" fill="none" opacity="0.55"/>
-      <path d="M150,55 Q165,15 200,10 Q235,15 250,55" stroke="#2a0505" stroke-width="7" fill="none" opacity="0.7"/>
-      <path d="M95,115 Q140,88 185,120" stroke="#080202" stroke-width="11" fill="none" stroke-linecap="round"/>
-      <path d="M215,120 Q260,88 305,115" stroke="#080202" stroke-width="11" fill="none" stroke-linecap="round"/>
-      <ellipse cx="140" cy="175" rx="40" ry="48" fill="url(#_jsEye)"/>
-      <ellipse cx="260" cy="175" rx="40" ry="48" fill="url(#_jsEye)"/>
-      <ellipse cx="140" cy="175" rx="7" ry="36" fill="#0a0000"/>
-      <ellipse cx="260" cy="175" rx="7" ry="36" fill="#0a0000"/>
-      <path d="M105,275 Q200,345 295,275 Q288,308 200,326 Q112,308 105,275 Z" fill="#180303"/>
-      <path d="M118,278 L132,297 L146,278 L160,297 L174,278 L188,297 L200,278 L212,297 L226,278 L240,297 L254,278 L268,297 L282,278"
-            fill="#e9e1d2"/>
-      <path d="M123,320 L137,302 L151,320 L165,302 L179,320 L193,302 L207,320 L221,302 L235,320 L249,302 L263,320 L277,302"
-            fill="#e9e1d2"/>
-    </svg>`;
-  document.body ? document.body.appendChild(overlay) : document.documentElement.appendChild(overlay);
-  setTimeout(()=>{
-    overlay.innerHTML = '';
-    const d = document.createElement('div');
-    d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#d81d1d;font:900 clamp(28px,7vw,64px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;letter-spacing:2px;text-shadow:0 0 18px rgba(216,29,29,0.7);';
-    d.textContent = 'BYE BYE';
-    overlay.appendChild(d);
-  }, 1300);
 }
 function _triggerLockdown(){
   if(_lockedDown) return;
   _lockedDown = true;
   try{
-    _showJumpScare();
+    startLockdownRoom();
   }catch(e){
+    _domWiped = true;
     try{
       document.title = 'nice try';
       document.documentElement.innerHTML = '';
       const d = document.createElement('div');
       d.style.cssText = 'position:fixed;inset:0;background:#000;color:#d81d1d;display:flex;align-items:center;justify-content:center;font:900 clamp(28px,7vw,64px)/1.3 "Arial Narrow",Impact,sans-serif;text-align:center;padding:24px;z-index:99999;letter-spacing:2px;text-shadow:0 0 18px rgba(216,29,29,0.7);';
-      d.textContent = 'BYE BYE';
+      d.textContent = 'NOT HACKING HERE BUDDY';
       document.body ? document.body.appendChild(d) : document.documentElement.appendChild(d);
     }catch(e2){}
   }
