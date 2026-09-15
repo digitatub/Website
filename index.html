@@ -25,11 +25,11 @@ html,body{margin:0}
 body{background:var(--paper);color:var(--ink);font:400 15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
 [hidden]{display:none!important}
 button{font-family:inherit;color:inherit}
-input{color:inherit}
+input,textarea{color:inherit}
 ::placeholder{color:#B6AE9C}
 ::selection{background:rgba(42,110,79,.25)}
 :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-input:focus-visible{outline:none}
+input:focus-visible,textarea:focus-visible{outline:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .neg{color:var(--red)}
 .badlab{color:var(--red)}
@@ -44,7 +44,7 @@ body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;mi
   transition:transform .12s,box-shadow .12s}
 .btn:hover{transform:translateY(-1px);box-shadow:0 7px 16px rgba(32,28,21,.18)}
 .btn:active{transform:none;box-shadow:none}
-.btn[disabled]{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:rgba(32,28,21,.06);box-shadow:none;transform:none}
 .btn.red{background:var(--red);border-color:var(--red)}
@@ -55,7 +55,7 @@ body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;mi
 .iconbtn[disabled]{opacity:.28;cursor:not-allowed}
 .ic{width:17px;height:17px;flex:none}
 .kbd{font:400 10.5px var(--mono);border:1px solid rgba(242,237,226,.45);padding:1px 6px;border-radius:4px;opacity:.75}
-.lineinput{border:0;border-bottom:1px solid var(--hair2);background:none;padding:8px 2px;font:400 14.5px var(--sans);outline:none}
+.lineinput{border:0;border-bottom:1px solid var(--hair2);background:none;padding:8px 2px;font:400 14.5px var(--sans);outline:none;width:100%}
 .lineinput:focus{border-color:var(--ink)}
 .amtbox{display:flex;align-items:baseline;gap:4px;border-bottom:2px solid var(--ink);padding:0 4px 2px}
 .amtbox .cur{font:600 20px var(--serif);color:var(--soft)}
@@ -84,8 +84,12 @@ body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;mi
 .brand{display:flex;align-items:baseline;gap:14px}
 .wordmark{font:italic 600 27px var(--serif);letter-spacing:-.01em}
 .tag{font:400 10px var(--mono);letter-spacing:.28em;color:var(--soft);text-transform:uppercase}
-.mright{display:flex;align-items:center;gap:16px}
+.mright{display:flex;align-items:center;gap:12px}
 .mdate{font:400 11px var(--mono);letter-spacing:.18em;color:var(--soft);text-transform:uppercase}
+.avbtn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink);background:var(--paper2);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  font:italic 600 15px var(--serif);padding:0;transition:background .15s,color .15s}
+.avbtn:hover{background:var(--ink);color:var(--paper)}
 /* ---------- hero ---------- */
 @keyframes rise{from{opacity:0;transform:translateY(10px)}}
 .hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.9fr);gap:44px;
@@ -229,11 +233,11 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
 .tk{padding-bottom:5px;border-bottom:2px solid transparent}
 .tk.on{color:var(--ink);border-color:var(--ink)}
 .ob-h{font:600 34px/1.15 var(--serif);letter-spacing:-.01em;margin:0 0 12px}
-.ob-p{color:var(--ink2);max-width:48ch;margin:0 0 22px}
+.ob-p{color:var(--ink2);max-width:52ch;margin:0 0 22px}
 .ob-cap{font:italic 500 14.5px var(--serif);color:var(--ink2);margin-top:18px}
 .ob-err{color:var(--red);font:400 13px var(--sans);margin:10px 0 0}
 .obNav{display:flex;justify-content:space-between;align-items:center;margin-top:38px}
-/* ---------- allocation table (setup + settings) ---------- */
+/* ---------- allocation table ---------- */
 .te-top{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px}
 .te-cols{display:flex;justify-content:space-between;padding:9px 0 7px;border-bottom:1.5px solid var(--ink);
   font:600 9.5px var(--sans);letter-spacing:.18em;color:var(--soft);text-transform:uppercase}
@@ -261,6 +265,28 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
 .ce-add:hover{color:var(--ink)}
 .ce-status{font:italic 500 13.5px var(--serif);color:var(--ink2);margin:12px 0 0}
 .ce-status.bad{color:var(--red)}
+/* ---------- account & sync ---------- */
+.acc-sign{display:flex;align-items:center;gap:14px;margin-top:18px;padding:14px 16px;
+  border:1px solid var(--hair2);border-radius:10px;background:var(--rc)}
+.acc-av{width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--paper);
+  font:italic 600 19px var(--serif);display:flex;align-items:center;justify-content:center;flex:none}
+.acc-sign .nm{font:600 17px var(--serif)}
+.acc-sign .sm{font:400 10.5px var(--mono);color:var(--soft);letter-spacing:.08em;margin-top:2px}
+.acc-sec{margin-top:26px}
+.acc-sec>.label{margin-bottom:10px}
+.acc-p{font:400 13.5px/1.55 var(--sans);color:var(--ink2);margin:0 0 12px}
+.acc-p b{color:var(--ink)}
+.passgrid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.passgrid .fg{flex:1;min-width:150px}
+.passgrid .label{margin-bottom:6px}
+.codebox{width:100%;min-height:90px;resize:vertical;font:400 11px/1.5 var(--mono);
+  border:1px solid var(--hair2);border-radius:8px;background:var(--rc);padding:10px 12px;
+  word-break:break-all;color:var(--ink);outline:none}
+.codebox:focus{border-color:var(--ink)}
+.codeout{margin-top:12px}
+.codefoot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.codefoot .hint{font:400 10.5px var(--mono);color:var(--soft);flex:1;min-width:160px}
+.acc-note{font:italic 400 13px var(--serif);color:var(--soft);margin-top:14px;line-height:1.5}
 /* ---------- modal / toasts ---------- */
 .overlay{position:fixed;inset:0;background:rgba(32,28,21,.45);display:flex;align-items:flex-start;
   justify-content:center;padding:6vh 20px;overflow:auto;z-index:60}
@@ -318,11 +344,11 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
   <div class="brand"><span class="wordmark">Payweek</span><span class="tag">spend it well</span></div>
   <div class="obTicks" id="obTicks"></div>
   <form id="obForm"><div id="obBody"></div></form>
-  <div class="obNav">
+  <div class="obNav" id="obNav">
     <button type="button" class="btn ghost" id="obBack">Back</button>
     <button type="button" class="btn" id="obNext">Continue</button>
   </div>
-  <p class="footTag" style="margin-top:44px">Nothing leaves this browser — no account, no cloud, no judgement.</p>
+  <p class="footTag" style="margin-top:44px">Your money stays in this browser — no cloud, no tracking, no judgement.</p>
 </section>
 
 <!-- ============ MAIN APP ============ -->
@@ -331,6 +357,7 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
     <div class="brand"><span class="wordmark">Payweek</span><span class="tag">spend it well</span></div>
     <div class="mright">
       <span class="mdate" id="todayStr"></span>
+      <button class="avbtn" id="acctBtn" aria-label="Account and sync" title="Account &amp; sync"><span id="avIn">·</span></button>
       <button class="iconbtn" id="settingsBtn" aria-label="Settings" title="Settings"></button>
     </div>
   </header>
@@ -402,8 +429,11 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
 
   <footer>
     <div class="footrow">
-      <span>your money lives only in this browser — no accounts, no cloud</span>
-      <button type="button" class="linkish" id="resetLink">start over</button>
+      <span>your ledger lives in this browser — carry it anywhere with a sync code</span>
+      <span style="display:flex;gap:18px;flex-wrap:wrap">
+        <button type="button" class="linkish" id="acctLink">account &amp; sync</button>
+        <button type="button" class="linkish" id="resetLink">start over</button>
+      </span>
     </div>
     <div class="footTag">Payweek — a small ledger for people who'd rather know than wonder.</div>
   </footer>
@@ -414,7 +444,7 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setTitle">
     <div class="mhead"><h2 id="setTitle">The books</h2><button class="iconbtn" id="setClose" aria-label="Close"></button></div>
     <div class="fgroup"><span class="label">Your name</span>
-      <input class="lineinput" id="setName" maxlength="24" style="width:100%"></div>
+      <input class="lineinput" id="setName" maxlength="24"></div>
     <div class="fgroup"><span class="label">Payday — where the week resets</span>
       <div class="days sm" id="setDays"></div>
       <p class="ob-cap" id="setPayCap"></p></div>
@@ -434,6 +464,15 @@ footer{margin-top:66px;padding:18px 0 36px;border-top:1px solid var(--hair)}
   </div>
 </div>
 
+<!-- ============ ACCOUNT & SYNC ============ -->
+<div class="overlay" id="acctOv" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <div class="mhead"><h2 id="acctTitle">Account &amp; sync</h2><button class="iconbtn" id="acctClose" aria-label="Close"></button></div>
+    <div id="acctBody"></div>
+  </div>
+</div>
+
+<input type="file" id="fileIn" accept=".txt,.payweek,text/plain" hidden>
 <div id="toasts" aria-live="polite"></div>
 
 <script>
@@ -471,6 +510,107 @@ function barcode(key){
 function jagUp(n){let d='M0 7';for(let i=0;i<n;i++)d+=` L${i*14+7} 0 L${(i+1)*14} 7`;return d+' Z';}
 function jagDown(n){let d='M0 0';for(let i=0;i<n;i++)d+=` L${i*14+7} 7 L${(i+1)*14} 0`;return d+' Z';}
 
+/* ================= crypto & sync codes ================= */
+const SUBTLE=(typeof crypto!=='undefined'&&crypto.subtle)?crypto.subtle:null;
+function bufToB64(buf){const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);}
+const b64u=buf=>bufToB64(buf).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function unb64u(s){let t=String(s).replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';
+  const b=atob(t),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+async function derivePass(pass,salt){
+  const km=await SUBTLE.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveBits']);
+  const bits=await SUBTLE.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},km,256);
+  const check=b64u(await SUBTLE.digest('SHA-256',bits));
+  return{bits:new Uint8Array(bits),check};
+}
+async function verifyPass(pass){
+  const{check}=await derivePass(pass,unb64u(S.acct.salt));
+  return check===S.acct.check;
+}
+function packState(){
+  return{v:1,n:S.name,p:S.paydayDow,w:S.weeklyTotal,cr:S.created,
+    c:S.cats.map(c=>({i:c.id,n:c.name,a:c.amt})),
+    s:S.spends.map(s=>({i:s.id,t:Math.round(s.ts),c:s.cat,a:s.a,n:s.note||undefined,cn:s.cn||undefined})),
+    a:S.acct?{i:S.acct.id,s:S.acct.since,salt:S.acct.salt,check:S.acct.check}:undefined};
+}
+function unpackState(o){
+  if(!o||typeof o!=='object')throw new Error('format');
+  const num=(x,d)=>{const n=Math.round(Number(x));return Number.isFinite(n)?n:d;};
+  const str=(x,d,l)=>{x=typeof x==='string'?x.trim().slice(0,l||24):'';return x||d;};
+  const paydayDow=Math.max(0,Math.min(6,num(o.p,5)));
+  const weeklyTotal=Math.max(1,Math.min(99999999,num(o.w,25000)));
+  let cats=(Array.isArray(o.c)?o.c:[]).slice(0,40).map(c=>(c&&typeof c==='object')?c:{})
+    .map(c=>({id:str(c.i,'',20)||uid(),name:str(c.n,'Misc'),a:Math.max(0,Math.min(9999999,num(c.a,0)))}))
+    .filter(c=>c.a>0);
+  if(!cats.length)cats=[{id:uid(),name:'Everything',a:weeklyTotal}];
+  const seen=new Set();cats=cats.filter(c=>!seen.has(c.id)&&seen.add(c.id));
+  const spends=(Array.isArray(o.s)?o.s:[]).slice(0,5000).map(s=>(s&&typeof s==='object')?s:{})
+    .map(s=>({id:str(s.i,'',20)||uid(),ts:num(s.t,Date.now()),cat:str(s.c,'other',20)||'other',
+      cn:str(s.cn,'',24)||undefined,a:Math.max(0,Math.min(10000000,num(s.a,0))),note:str(s.n,'',48)||undefined}))
+    .filter(s=>s.a>0);
+  const ac=(o.a&&typeof o.a==='object')?o.a:null;
+  const acct=(ac&&ac.salt&&ac.check)?{id:str(ac.i,'',20)||uid(),since:num(ac.s,Date.now()),
+    salt:str(ac.salt,'',64),check:str(ac.check,'',64)}:null;
+  return{v:1,name:str(o.n,'friend'),paydayDow,weeklyTotal,cats,spends,acct,created:num(o.cr,Date.now())};
+}
+async function sealCode(pass){
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const{bits}=await derivePass(pass,salt);
+  const key=await SUBTLE.importKey('raw',bits,'AES-GCM',false,['encrypt']);
+  const ct=await SUBTLE.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(packState())));
+  return 'PKWE.'+b64u(salt)+'.'+b64u(iv)+'.'+b64u(ct);
+}
+async function openCode(code,pass){
+  const t=String(code||'').replace(/\s+/g,'');
+  const parts=t.split('.');
+  if(parts[0]!=='PKWE'||parts.length!==4)throw new Error('format');
+  const salt=unb64u(parts[1]),iv=unb64u(parts[2]),ct=unb64u(parts[3]);
+  const{bits}=await derivePass(pass,salt);
+  const key=await SUBTLE.importKey('raw',bits,'AES-GCM',false,['decrypt']);
+  let pt;
+  try{pt=await SUBTLE.decrypt({name:'AES-GCM',iv},key,ct);}
+  catch(e){throw new Error('pass');}
+  let o;try{o=JSON.parse(new TextDecoder().decode(pt));}catch(e){throw new Error('format');}
+  return unpackState(o);
+}
+function applyImported(st,mode){
+  if(mode==='merge'){
+    const ids=new Set(S.spends.map(s=>s.id));
+    const localMax=S.spends.reduce((m,s)=>Math.max(m,s.ts),0);
+    const codeMax=st.spends.reduce((m,s)=>Math.max(m,s.ts),0);
+    const newer=codeMax>localMax?st:S,older=codeMax>localMax?S:st;
+    const seen=new Set(newer.cats.map(c=>c.id));
+    S={v:1,name:newer.name,paydayDow:newer.paydayDow,weeklyTotal:newer.weeklyTotal,
+      cats:newer.cats.concat(older.cats.filter(c=>!seen.has(c.id))),
+      spends:S.spends.concat(st.spends.filter(s=>!ids.has(s.id))),
+      acct:S.acct||st.acct,created:Math.min(S.created||Date.now(),st.created||Date.now())};
+  }else{S=st;}
+  save();view.off=0;closeAcct();
+  $('#onboard').hidden=true;$('#main').hidden=false;
+  renderMain();
+  toast(mode==='merge'?'Merged — every entry from both devices is on this one now.':'Ledger loaded — you\'re signed in on this device.');
+}
+function copyText(txt,srcBtn){
+  const mark=()=>{if(!srcBtn)return;const old=srcBtn.textContent;
+    srcBtn.textContent='Copied ✓';srcBtn.disabled=true;
+    setTimeout(()=>{srcBtn.textContent=old;srcBtn.disabled=false;},1600);};
+  const legacy=()=>{const ta=document.createElement('textarea');ta.value=txt;
+    ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');mark();}catch(e){}ta.remove();};
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(txt).then(mark).catch(legacy);
+  else legacy();
+}
+function downloadCode(code){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([code],{type:'text/plain'}));
+  a.download='payweek-'+iso(new Date())+'.txt';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+let fileTarget=null;
+function pickFile(ta){fileTarget=ta;$('#fileIn').click();}
+
 /* ================= state ================= */
 const KEY='payweek.v1';
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s;}catch(e){}return null;}
@@ -501,7 +641,8 @@ function renderMain(){if(!S)return;
   $('#logPanel').hidden=!logOpen;}
 function enterApp(){$('#onboard').hidden=true;$('#main').hidden=false;renderMain();}
 function renderMasthead(){const d=new Date();
-  $('#todayStr').textContent=`${DAY[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;}
+  $('#todayStr').textContent=`${DAY[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  $('#avIn').textContent=(S.name||'?').trim().charAt(0).toUpperCase()||'?';}
 
 let heroTweenId=0;
 function setHeroNum(c){
@@ -786,7 +927,7 @@ function toast(msg,act){
   while($('#toasts').children.length>3)$('#toasts').firstChild.remove();
 }
 
-/* ================= allocation table editor (setup + settings) ================= */
+/* ================= allocation table editor ================= */
 function tableEditor(root,model){
   root.innerHTML=`
     <div class="te-top"><span class="label">Weekly spending money</span>
@@ -864,7 +1005,6 @@ function tableEditor(root,model){
 const dayPickerHTML=sel=>DAYL.map((l,i)=>`<button type="button" class="dayb ${i===sel?'sel':''}" data-i="${i}" aria-label="${DAY[i]}">${l}</button>`).join('');
 const capFor=i=>i==null?'Pick the day your paycheck usually lands.':`Your week runs ${DAY[i]} → ${DAY[(i+6)%7]}.`;
 const deriveWeekly=(pay,f)=>Math.round(pay*(f==='b'?0.5:f==='m'?12/52:1));
-/* starter rows modeled on a real paycheck split — car, insurance, phone, snacks, gas, groceries, savings, fun */
 function defaultCats(weekly){
   const DEF=[['Car',.14],['Insurance',.09],['Phone',.05],['Work snacks',.09],['Gas',.07],['Groceries',.11],['Savings',.15],['Entertainment',.11]];
   return DEF.map(([n,p])=>({id:uid(),name:n,amt:Math.round(weekly*p/100)*100}));
@@ -874,16 +1014,60 @@ function obCap(){
   const pay=$('#obPay'),v=pay?parseMoney(pay.value):null;
   el.textContent=v&&v>0?`That's about ${fmtN(deriveWeekly(v,ob.freq))} a week to spend.`:'Roughly how much, each time?';
 }
+async function obSignIn(){
+  const err=$('#obInErr'),btn=$('#obInGo');
+  err.hidden=true;
+  const code=$('#obCode').value.trim(),pass=$('#obPass').value;
+  if(!code||!pass){err.textContent='Paste the code and its passphrase first.';err.hidden=false;return;}
+  btn.disabled=true;btn.textContent='Unlocking…';
+  try{
+    const st=await openCode(code,pass);
+    S=st;save();enterApp();
+    toast(`Welcome back, ${esc(S.name)} — you're signed in on this device.`);
+  }catch(e){
+    err.textContent='That code and passphrase don\'t match — check both and try again.';
+    err.hidden=false;btn.disabled=false;btn.textContent='Unlock my ledger';
+  }
+}
 function obRender(){
   const b=$('#obBody');
+  if(ob.step==='in'){
+    $('#obTicks').hidden=true;$('#obNav').hidden=true;
+    if(!SUBTLE){
+      b.innerHTML=`<h2 class="ob-h">Welcome back.</h2>
+        <p class="ob-p">This browser can't decrypt sync codes where the page is running (it needs a secure context — try a current browser, or serve the file over https).</p>
+        <p><button type="button" class="linkish" id="obInBack">← back</button></p>`;
+      $('#obInBack').onclick=()=>{ob.step=1;obRender();};
+      return;
+    }
+    b.innerHTML=`<h2 class="ob-h">Welcome back.</h2>
+      <p class="ob-p">Sign in with a sync code from your other device. After this, this device stays signed in — no login screen, ever.</p>
+      <textarea class="codebox" id="obCode" placeholder="Paste your sync code — it starts with PKWE" style="min-height:120px"></textarea>
+      <div style="margin-top:10px"><button type="button" class="linkish" id="obPickFile">or choose the code file you saved</button></div>
+      <div class="passgrid" style="margin-top:16px">
+        <div class="fg"><span class="label">Passphrase</span>
+          <input class="lineinput" id="obPass" type="password" autocomplete="current-password"></div>
+      </div>
+      <p class="ob-err" id="obInErr" hidden></p>
+      <div class="rowbtns" style="margin-top:20px">
+        <button type="button" class="btn" id="obInGo">Unlock my ledger</button>
+        <button type="button" class="btn ghost" id="obInBack">Start fresh instead</button>
+      </div>`;
+    $('#obPickFile').onclick=()=>pickFile($('#obCode'));
+    $('#obInBack').onclick=()=>{ob.step=1;obRender();};
+    $('#obInGo').onclick=obSignIn;
+    return;
+  }
+  $('#obTicks').hidden=false;$('#obNav').hidden=false;
   $('#obTicks').innerHTML=[1,2,3,4].map(n=>`<span class="tk ${ob.step>=n?'on':''}">0${n}</span>`).join('');
   $('#obBack').style.visibility=ob.step===1?'hidden':'visible';
   $('#obNext').textContent=ob.step===4?'Start budgeting':'Continue';
   if(ob.step===1){
     b.innerHTML=`<h2 class="ob-h">First — who's keeping the books?</h2>
-      <p class="ob-p">A first name is plenty. It lives on this device — no account, no password, nothing to log into, ever.</p>
+      <p class="ob-p">A first name is plenty. It lives on this device — no account needed, nothing to log into.</p>
       <div class="amtbox big" style="max-width:420px"><input id="obName" maxlength="24" placeholder="your name" autocomplete="off"></div>
-      <p class="ob-err" id="obErr" hidden>Even a nickname works.</p>`;
+      <p class="ob-err" id="obErr" hidden>Even a nickname works.</p>
+      <p style="margin-top:28px"><button type="button" class="linkish" id="obHaveCode">I have a sync code from another device</button></p>`;
     const i=$('#obName');i.value=ob.name;setTimeout(()=>i.focus(),30);
   }else if(ob.step===2){
     b.innerHTML=`<h2 class="ob-h">What day is payday?</h2>
@@ -913,7 +1097,7 @@ function obRender(){
 function commitOnboard(){
   S={v:1,name:ob.name,paydayDow:ob.paydayDow,weeklyTotal:ob.weekly,
      cats:ob.cats.filter(c=>c.amt>0).map(c=>({id:c.id,name:c.name.trim()||'Misc',amt:c.amt})),
-     spends:[],created:Date.now()};
+     spends:[],acct:null,created:Date.now()};
   save();enterApp();
   toast(`Welcome, ${esc(S.name)} — ${DAY[S.paydayDow]}s start your week.`);
 }
@@ -930,12 +1114,172 @@ function openSettings(){
 }
 function closeSettings(){$('#setOv').hidden=true;$('#soConfirm').hidden=true;}
 
+/* ================= account & sync ================= */
+function openAcct(){$('#acctOv').hidden=false;renderAcct();}
+function closeAcct(){$('#acctOv').hidden=true;}
+function renderAcct(){
+  const b=$('#acctBody');
+  if(!SUBTLE){
+    b.innerHTML=`<p class="acc-p" style="margin-top:20px">Your ledger is safe on this device — but this browser can't encrypt here, and sync codes only travel encrypted. Try a current browser, or serve this file over https, and the account features will appear.</p>`;
+    return;
+  }
+  if(!S.acct){
+    b.innerHTML=`
+      <p class="acc-p" style="margin-top:20px">You don't need an account to use Payweek — this device already remembers everything, and you'll never see a login screen. An account adds one superpower: <b>a passphrase</b> that seals your ledger into a portable code you can unlock on another phone or laptop.</p>
+      <div class="acc-sec">
+        <span class="label">Create your account</span>
+        <div class="passgrid">
+          <div class="fg"><span class="label">Passphrase</span>
+            <input class="lineinput" id="npPass" type="password" placeholder="6+ characters" autocomplete="new-password"></div>
+          <div class="fg"><span class="label">Again</span>
+            <input class="lineinput" id="npPass2" type="password" placeholder="repeat it" autocomplete="new-password"></div>
+        </div>
+        <p class="ob-err" id="npErr" hidden></p>
+        <div class="rowbtns" style="margin-top:16px"><button type="button" class="btn" id="npGo">Create account</button></div>
+        <p class="acc-note">The passphrase never leaves this device — it only locks and unlocks your sync codes. There's no reset link, because there's no server; keep it somewhere safe.</p>
+      </div>`;
+    $('#npGo').onclick=async()=>{
+      const p=$('#npPass').value,p2=$('#npPass2').value,err=$('#npErr'),btn=$('#npGo');
+      err.hidden=true;
+      if(p.length<6){err.textContent='At least 6 characters — it\'s protecting your money.';err.hidden=false;return;}
+      if(p!==p2){err.textContent='Those two don\'t match.';err.hidden=false;return;}
+      btn.disabled=true;btn.textContent='Creating…';
+      try{
+        const salt=crypto.getRandomValues(new Uint8Array(16));
+        const{check}=await derivePass(p,salt);
+        S.acct={id:uid(),since:Date.now(),salt:b64u(salt),check};
+        save();renderAcct();
+        toast('Account created — you\'ll never be asked to log in on this device.');
+      }catch(e){
+        err.textContent='Something went wrong creating the account — try again.';
+        err.hidden=false;btn.disabled=false;btn.textContent='Create account';
+      }
+    };
+    return;
+  }
+  const since=new Date(S.acct.since);
+  b.innerHTML=`
+    <div class="acc-sign"><div class="acc-av">${esc((S.name||'?').trim().charAt(0).toUpperCase()||'?')}</div>
+      <div><div class="nm">${esc(S.name)}</div>
+        <div class="sm">SIGNED IN · SINCE ${MONTH3[since.getMonth()]} ${since.getFullYear()} · ACCT Nº ${esc(String(S.acct.id).slice(-6).toUpperCase())}</div></div></div>
+    <p class="acc-p" style="margin-top:14px">On this device you stay signed in — forever, until the browser's storage is erased. Signing in only ever happens on a <em>new</em> device, with a sync code.</p>
+    <div class="acc-sec">
+      <span class="label">Take it to another device</span>
+      <p class="acc-p" style="margin-bottom:10px">Seal a snapshot of your ledger into a code. Paste it anywhere — messages, email, notes — then unlock it on the other device.</p>
+      <div class="passgrid">
+        <div class="fg"><span class="label">Your passphrase</span>
+          <input class="lineinput" id="spPass" type="password" autocomplete="current-password"></div>
+        <button type="button" class="btn" id="spGo">Seal a sync code</button>
+      </div>
+      <p class="ob-err" id="spErr" hidden></p>
+      <div class="codeout" id="codeOut" hidden>
+        <textarea class="codebox" id="codeTa" readonly></textarea>
+        <div class="codefoot">
+          <button type="button" class="btn ghost" id="cpBtn">Copy code</button>
+          <button type="button" class="btn ghost" id="dlBtn">Download as file</button>
+          <span class="hint">codes are snapshots — seal a fresh one after big changes</span>
+        </div>
+      </div>
+    </div>
+    <div class="acc-sec">
+      <span class="label">Bring a code in</span>
+      <p class="acc-p" style="margin-bottom:10px">Moving from another device? Unlock its code here. ${S.spends.length?`This device holds <b>${S.spends.length} entries</b> — you'll choose to replace or merge.`:'This device\'s spends list is empty, so importing simply adopts the code\'s ledger.'}</p>
+      <textarea class="codebox" id="inCode" placeholder="Paste a sync code — it starts with PKWE"></textarea>
+      <div style="margin-top:8px"><button type="button" class="linkish" id="inPick">or choose the code file</button></div>
+      <div class="passgrid" style="margin-top:12px">
+        <div class="fg"><span class="label">Its passphrase</span>
+          <input class="lineinput" id="inPass" type="password" autocomplete="current-password"></div>
+        <button type="button" class="btn" id="inGo">Unlock</button>
+      </div>
+      <p class="ob-err" id="inErr" hidden></p>
+      <div id="inChoice" hidden>
+        <p class="acc-p" style="margin:12px 0 0">Unlocked <b id="inSum"></b>. What should this device do?</p>
+        <div class="rowbtns" style="margin-top:12px">
+          <button type="button" class="btn" id="inMerge">Merge both</button>
+          <button type="button" class="btn ghost" id="inRepl">Replace what's here</button>
+        </div>
+      </div>
+    </div>
+    <div class="acc-sec">
+      <span class="label">Passphrase housekeeping</span>
+      <div>
+        <button type="button" class="linkish" id="chToggle">change passphrase</button>
+        <span style="color:var(--soft)"> · </span>
+        <button type="button" class="linkish" id="rmAcct">remove account from this device</button>
+      </div>
+      <div id="chBox" hidden style="margin-top:12px">
+        <div class="passgrid">
+          <div class="fg"><span class="label">Current</span>
+            <input class="lineinput" id="chOld" type="password" autocomplete="current-password"></div>
+          <div class="fg"><span class="label">New</span>
+            <input class="lineinput" id="chNew" type="password" autocomplete="new-password"></div>
+          <button type="button" class="btn ghost" id="chGo">Update</button>
+        </div>
+        <p class="ob-err" id="chErr" hidden></p>
+      </div>
+      <p class="acc-note">Forgot the passphrase? Codes can't be opened without it — no reset exists, because no server does. That's the trade for your data never living anywhere but your devices.</p>
+    </div>`;
+  $('#spGo').onclick=async()=>{
+    const err=$('#spErr'),btn=$('#spGo');
+    err.hidden=true;$('#codeOut').hidden=true;
+    const pass=$('#spPass').value;
+    if(!pass){err.textContent='Enter your passphrase.';err.hidden=false;return;}
+    btn.disabled=true;btn.textContent='Sealing…';
+    try{
+      if(!(await verifyPass(pass))){err.textContent='That\'s not your passphrase.';err.hidden=false;return;}
+      $('#codeTa').value=await sealCode(pass);
+      $('#codeOut').hidden=false;$('#spPass').value='';
+    }catch(e){err.textContent='Sealing failed — try again.';err.hidden=false;}
+    finally{btn.disabled=false;btn.textContent='Seal a sync code';}
+  };
+  $('#cpBtn').onclick=e=>copyText($('#codeTa').value,e.currentTarget);
+  $('#dlBtn').onclick=()=>downloadCode($('#codeTa').value);
+  $('#inPick').onclick=()=>pickFile($('#inCode'));
+  let pendingState=null;
+  $('#inGo').onclick=async()=>{
+    const err=$('#inErr'),btn=$('#inGo');
+    err.hidden=true;$('#inChoice').hidden=true;pendingState=null;
+    const code=$('#inCode').value,pass=$('#inPass').value;
+    if(!code.trim()||!pass){err.textContent='Paste the code and its passphrase.';err.hidden=false;return;}
+    btn.disabled=true;btn.textContent='Unlocking…';
+    try{
+      pendingState=await openCode(code,pass);
+      $('#inSum').innerHTML=`${esc(pendingState.name)}\'s ledger — ${pendingState.spends.length} entries, ${fmtN(pendingState.weeklyTotal)} a week`;
+      $('#inChoice').hidden=false;
+    }catch(e){err.textContent='That code and passphrase don\'t match.';err.hidden=false;}
+    finally{btn.disabled=false;btn.textContent='Unlock';}
+  };
+  $('#inMerge').onclick=()=>{if(pendingState)applyImported(pendingState,'merge');};
+  $('#inRepl').onclick=()=>{if(pendingState)applyImported(pendingState,'replace');};
+  $('#chToggle').onclick=()=>{$('#chBox').hidden=!$('#chBox').hidden;};
+  $('#chGo').onclick=async()=>{
+    const err=$('#chErr'),btn=$('#chGo');
+    err.hidden=true;
+    const o=$('#chOld').value,n=$('#chNew').value;
+    if(n.length<6){err.textContent='New passphrase needs 6+ characters.';err.hidden=false;return;}
+    btn.disabled=true;btn.textContent='…';
+    try{
+      if(!(await verifyPass(o))){err.textContent='Current passphrase is off.';err.hidden=false;return;}
+      const salt=crypto.getRandomValues(new Uint8Array(16));
+      const{check}=await derivePass(n,salt);
+      S.acct.salt=b64u(salt);S.acct.check=check;save();
+      toast('Passphrase updated — codes you seal from now on will use it.');
+      $('#chBox').hidden=true;$('#chOld').value='';$('#chNew').value='';
+    }finally{btn.disabled=false;btn.textContent='Update';}
+  };
+  $('#rmAcct').onclick=()=>{
+    S.acct=null;save();renderAcct();
+    toast('Account removed — your ledger stays right here.');
+  };
+}
+
 /* ================= wiring ================= */
 function bindStatic(){
   $('#settingsBtn').innerHTML=icon('sliders');
   $('#logBtnIc').innerHTML=icon('plus');
   $('#logClose').innerHTML=icon('x');
   $('#setClose').innerHTML=icon('x');
+  $('#acctClose').innerHTML=icon('x');
   $('#navOlder').innerHTML=icon('chevL');
   $('#navNewer').innerHTML=icon('chevR');
 
@@ -1008,8 +1352,22 @@ function bindStatic(){
   $('#soNo').onclick=()=>{$('#soConfirm').hidden=true;};
   $('#soYes').onclick=()=>{localStorage.removeItem(KEY);location.reload();};
 
-  $('#obBack').onclick=()=>{if(ob.step>1){ob.step--;obRender();}};
+  $('#acctBtn').onclick=openAcct;
+  $('#acctLink').onclick=openAcct;
+  $('#acctClose').onclick=closeAcct;
+  $('#acctOv').addEventListener('click',e=>{if(e.target===$('#acctOv'))closeAcct();});
+
+  $('#fileIn').addEventListener('change',e=>{
+    const f=e.target.files&&e.target.files[0];e.target.value='';
+    if(!f||!fileTarget)return;
+    const r=new FileReader();
+    r.onload=()=>{fileTarget.value=String(r.result||'').replace(/\s+/g,'').slice(0,2000000);};
+    r.readAsText(f);
+  });
+
+  $('#obBack').onclick=()=>{if(ob.step>1&&ob.step!=='in'){ob.step--;obRender();}};
   $('#obNext').onclick=()=>{
+    if(ob.step==='in')return;
     if(ob.step===1){
       const v=$('#obName').value.trim();
       if(!v){$('#obErr').hidden=false;$('#obName').closest('.amtbox').classList.add('err');return;}
@@ -1029,11 +1387,13 @@ function bindStatic(){
   };
   $('#obForm').addEventListener('submit',e=>{
     e.preventDefault();
+    if(ob.step==='in')return;
     const ae=document.activeElement;
     if(ob.step===4&&ae&&/te-name|te-amt|te-total/.test(String(ae.className||''))){ae.blur();return;}
     $('#obNext').click();
   });
   $('#onboard').addEventListener('click',e=>{
+    if(e.target.closest('#obHaveCode')){ob.step='in';obRender();return;}
     const d=e.target.closest('.dayb');
     if(d){
       ob.paydayDow=Number(d.dataset.i);
@@ -1058,13 +1418,16 @@ function bindStatic(){
 
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
-      if(!$('#setOv').hidden)closeSettings();
+      if(!$('#acctOv').hidden)closeAcct();
+      else if(!$('#setOv').hidden)closeSettings();
       else if(logOpen)closeLog();
       return;
     }
     const tag=(e.target.tagName||'');
     const typing=/INPUT|TEXTAREA|SELECT/.test(tag)||e.target.isContentEditable;
-    if(!typing&&(e.key==='l'||e.key==='L')){e.preventDefault();logOpen?closeLog():openLog();}
+    if(!typing&&$('#acctOv').hidden&&$('#setOv').hidden&&(e.key==='l'||e.key==='L')){
+      e.preventDefault();logOpen?closeLog():openLog();
+    }
   });
   window.addEventListener('resize',debounce(()=>{if(S&&!$('#main').hidden)renderRuler();},150));
 
