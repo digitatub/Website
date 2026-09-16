@@ -200,6 +200,7 @@ body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;mi
 .bg-total{font:600 21px var(--serif);font-variant-numeric:tabular-nums}
 .bg-per{font:400 11px var(--mono);color:var(--soft);margin-left:4px}
 .bg-rows{list-style:none;margin:0;padding:0}
+.bg-rows .lrow{border-bottom:1px solid var(--hair)}
 .bg-foot{font:italic 500 13px var(--serif);color:var(--ink2);padding-top:8px}
 .bg-foot.ok{color:var(--green)}
 .seclab{display:flex;justify-content:space-between;padding:14px 0 4px;
@@ -523,9 +524,9 @@ const DAYL=['S','M','T','W','T','F','S'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH3=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt=c=>(c<0?'−':'')+'$'+(Math.abs(c)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=c=>Number.isFinite(c)?((c<0?'−':'')+'$'+(Math.abs(c)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})):'$—';
 const fmtN=c=>c%100===0?((c<0?'−$'+(-c/100):'$'+(c/100))):fmt(c);
-const inDollars=c=>c%100?(c/100).toFixed(2):String(c/100);
+const inDollars=c=>Number.isFinite(c)&&c%100?(c/100).toFixed(2):String(Number.isFinite(c)?c/100:0);
 const parseMoney=v=>{const m=String(v).replace(/[,$\s]/g,'');if(!/^\d*\.?\d*$/.test(m)||m==='')return null;
   const f=parseFloat(m);return isNaN(f)?null:Math.round(f*100);};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -570,29 +571,48 @@ async function verifyPass(pass){
 function packState(){
   return{v:1,n:S.name,p:S.paydayDow,w:S.weeklyTotal,cr:S.created,bm:1,
     c:S.cats.map(c=>({i:c.id,n:c.name,a:c.amt,b:c.bill?1:0})),
-    s:S.spends.map(s=>({i:s.id,t:Math.round(s.ts),c:s.cat,a:s.a,n:s.note||undefined,cn:s.cn||undefined})),
+    s:S.spends.map(s=>({i:s.id,t:Math.round(s.ts),c:s.cat,a:s.amt,n:s.note||undefined,cn:s.cn||undefined})),
     a:S.acct?{u:S.acct.user,s:S.acct.since,salt:S.acct.salt,check:S.acct.check}:undefined};
 }
-function unpackState(o){
-  if(!o||typeof o!=='object')throw new Error('format');
+/* THE FIX — one canonical normalizer.
+   Accepts the app's own key names (id/name/amt/bill/ts/cat/note…) AND the compact
+   account-file key names (i/n/a/b/t/c…), clamps everything to sane numbers, and
+   returns a clean state. Used at every load AND every import, so a state saved by
+   the buggy importer (amounts filed under `a`) is re-labeled to `amt` automatically. */
+function healState(o){
+  if(!o||typeof o!=='object')o={};
   const num=(x,d)=>{const n=Math.round(Number(x));return Number.isFinite(n)?n:d;};
   const str=(x,d,l)=>{x=typeof x==='string'?x.trim().slice(0,l||24):'';return x||d;};
-  const paydayDow=Math.max(0,Math.min(6,num(o.p,5)));
-  const weeklyTotal=Math.max(1,Math.min(99999999,num(o.w,25000)));
-  let cats=(Array.isArray(o.c)?o.c:[]).slice(0,40).map(c=>(c&&typeof c==='object')?c:{})
-    .map(c=>({id:str(c.i,'',20)||uid(),name:str(c.n,'Misc'),a:Math.max(0,Math.min(9999999,num(c.a,0))),bill:c.b?1:0}))
-    .filter(c=>c.a>0);
-  if(!cats.length)cats=[{id:uid(),name:'Everything',a:weeklyTotal,bill:0}];
+  const pick=(x,y)=>x!==undefined?x:y;
+  const paydayDow=Math.max(0,Math.min(6,num(pick(o.paydayDow,o.p),5)));
+  const weeklyTotal=Math.max(1,Math.min(99999999,num(pick(o.weeklyTotal,o.w),25000)));
+  let cats=(Array.isArray(o.cats)?o.cats:(Array.isArray(o.c)?o.c:[])).slice(0,40)
+    .map(c=>(c&&typeof c==='object')?c:{})
+    .map(c=>({id:str(pick(c.id,c.i),'',20)||uid(),
+      name:str(pick(c.name,c.n),'Misc'),
+      amt:Math.max(0,Math.min(9999999,num(pick(c.amt,c.a),0))),
+      bill:(pick(c.bill,c.b))?1:0}))
+    .filter(c=>c.amt>0);
+  if(!cats.length)cats=[{id:uid(),name:'Everything',amt:weeklyTotal,bill:0}];
   const seen=new Set();cats=cats.filter(c=>!seen.has(c.id)&&seen.add(c.id));
-  const spends=(Array.isArray(o.s)?o.s:[]).slice(0,5000).map(s=>(s&&typeof s==='object')?s:{})
-    .map(s=>({id:str(s.i,'',20)||uid(),ts:num(s.t,Date.now()),cat:str(s.c,'other',20)||'other',
-      cn:str(s.cn,'',24)||undefined,a:Math.max(0,Math.min(10000000,num(s.a,0))),note:str(s.n,'',48)||undefined}))
-    .filter(s=>s.a>0);
-  const ac=(o.a&&typeof o.a==='object')?o.a:null;
-  const acct=(ac&&ac.salt&&ac.check)?{user:String(ac.u||'').trim().toLowerCase().slice(0,20),
-    since:num(ac.s,Date.now()),salt:str(ac.salt,'',64),check:str(ac.check,'',64)}:null;
-  if(acct&&!acct.user)acct.user='';
-  return{v:1,name:str(o.n,'friend'),paydayDow,weeklyTotal,cats,spends,acct,created:num(o.cr,Date.now()),bm:num(o.bm,0)};
+  const spends=(Array.isArray(o.spends)?o.spends:(Array.isArray(o.s)?o.s:[])).slice(0,5000)
+    .map(s=>(s&&typeof s==='object')?s:{})
+    .map(s=>({id:str(pick(s.id,s.i),'',20)||uid(),
+      ts:num(pick(s.ts,s.t),Date.now()),
+      cat:str(pick(s.cat,s.c),'other',20)||'other',
+      cn:str(s.cn,'',24)||undefined,
+      amt:Math.max(0,Math.min(10000000,num(pick(s.amt,s.a),0))),
+      note:str(pick(s.note,s.n),'',48)||undefined}))
+    .filter(s=>s.amt>0);
+  let ac=null;
+  if(o.acct&&typeof o.acct==='object')ac=o.acct;
+  else if(o.a&&typeof o.a==='object'&&o.a.salt)ac=o.a;
+  const acct=(ac&&ac.salt&&ac.check)?{
+    user:String(pick(ac.user,ac.u)||'').trim().toLowerCase().slice(0,20),
+    since:num(pick(ac.since,ac.s),Date.now()),
+    salt:str(ac.salt,'',64),check:str(ac.check,'',64)}:null;
+  return{v:1,name:str(pick(o.name,o.n),'friend'),paydayDow,weeklyTotal,cats,spends,acct,
+    created:num(pick(o.created,o.cr),Date.now()),bm:num(o.bm,0)};
 }
 async function sealCode(pass){
   const salt=crypto.getRandomValues(new Uint8Array(16));
@@ -613,7 +633,7 @@ async function openCode(code,pass){
   try{pt=await SUBTLE.decrypt({name:'AES-GCM',iv},key,ct);}
   catch(e){throw new Error('pass');}
   let o;try{o=JSON.parse(new TextDecoder().decode(pt));}catch(e){throw new Error('format');}
-  return unpackState(o);
+  return healState(o);
 }
 function applyImported(raw,mode){
   const st=migrate(raw,true);
@@ -656,7 +676,7 @@ function pickFile(cb){fileCB=cb;$('#fileIn').click();}
 
 /* ================= state & migration ================= */
 const KEY='payweek.v1';
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s;}catch(e){}return null;}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return healState(s);}catch(e){}return null;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('Couldn’t save — browser storage said no.');}}
 let S=load();
 const view={off:0};
@@ -753,7 +773,7 @@ function renderHero(){
     bl.innerHTML=`<b>Bills &amp; utilities</b> take <span class="bl-amt">${fmtN(ag.billsPlanned)}</span> a week — ${esc(billCats.map(c=>c.name.toLowerCase()).join(', '))}. `
       +(due>0?`<span class="bl-due">${fmtN(due)} still to pay.</span>`:`<span class="bl-due ok">all paid — handled.</span>`);
   }else bl.hidden=true;
-  const en=addDays(viewStart(),6);
+  const vs=viewStart(),en=addDays(vs,6),nextPay=addDays(vs,7);
   if(view.off===0){
     const ds=daysSince(),dl=7-ds;
     const share=Math.max(0,Math.round(ag.discBudget/7));
@@ -767,7 +787,9 @@ function renderHero(){
     $('#pdV').textContent=safe>0?fmtN(Math.ceil(safe/dl)):'—';
     $('#pdS').textContent=safe>0?`spreads over the next ${dl} day${dl>1?'s':''}`:'nothing left to spread';
     $('#payL').textContent='Payday';
-    $('#payV').textContent=`${DAY3[en.getDay()]} ${MONTH3[en.getMonth()]} ${en.getDate()}`;
+    $('#payV').textContent=ds===0
+      ?`${DAY3[vs.getDay()]} ${MONTH3[vs.getMonth()]} ${vs.getDate()}`
+      :`${DAY3[nextPay.getDay()]} ${MONTH3[nextPay.getMonth()]} ${nextPay.getDate()}`;
     $('#payS').textContent=ds===0?'today — fresh budget':(dl===1?'tomorrow':`in ${dl} days`);
     const p=$('#pace');
     if(ag.billsPlanned>0&&ag.discBudget<=0){p.hidden=false;p.className='pace bad';p.textContent='Bills take the whole week — nothing left for spending.';}
